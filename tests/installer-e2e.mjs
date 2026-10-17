@@ -582,6 +582,7 @@ function run(label, executable, args) {
     timeout: 600_000,
   });
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  if (output.includes('[cgdbg]')) process.stderr.write(output + '\n');
   if (result.error?.code === 'ETIMEDOUT') {
     throw new Error(`${label} timed out after 600s; partial output above may reveal the hung step\n${output}`);
   }

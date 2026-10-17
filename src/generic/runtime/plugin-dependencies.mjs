@@ -2668,6 +2668,7 @@ export async function ensurePluginDependencies(context, selection) {
       process.stderr.write(`[cgdbg] plugin ${spec.key}\n`);
       marketplace = await ensureMarketplacePlugin(spec, context);
     } catch (error) {
+      process.stderr.write(`[cgdbg] FAILED ${spec.key}: ${error?.message || String(error)}\n`);
       marketplace = warningResult(spec, error);
     }
     if (!shouldConfigurePluginDependency(marketplace) || spec.key === 'superpowers') {
