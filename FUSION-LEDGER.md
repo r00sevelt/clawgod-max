@@ -74,3 +74,11 @@
 - **教训（v0.1-d.1 必须落实）**：行格类识别必须以 `stylePool;charPool;native=` 结构标记为准，禁止仅凭 class 关键字/启发式；补上游同款 302 夹具（`cell-renderer-2.1.302-*.txt` 四件套）并加"锚点类必须含 stylePool"断言。
 - **待办**：302 夹具与单测矩阵（v0.1-d.1，可选）。
 
+## v0.1-d.1 + v0.2.0：首批发版（10-18 完成）
+
+- **v0.1-d.1**：从上游 `ebed315` 精确移植 12 个 302 夹具（`cell-renderer-2.1.302-*.txt`）与测试表项；新增行格类锚点守卫（`spans[1]` 必须含 `stylePool;charPool;native=`，fail-closed）与独立测试；`runtime-cell-segmenter` 扩至 100 项契约全绿。
+- **writeLine 对齐**：302 档案原冻结源以 `dg(n,f,m,p)` 结尾（生产环境 `dg` 存在于真实分块，云端一直绿；但夹具是切片无 `dg`），已改为上游 `paintCells(n,p.cells,f,m)`，与官方适配完全一致。教训：冻结 profile 的 writeLine 也应指向注入的公开实现，而非原分块内部函数。
+- **品牌化**：ClawGod Plus → **ClawGod Max**（46 文件：README×3、AGENTS、模板、自更新端点、测试断言、文档）；仓库 URL 切至 `r00sevelt/clawgod-max`；历史署名保留 3 处 "ClawGod Plus"（A6083450 原维护者）。
+- **提交**：`37710d1`（main）；云端 Compat Daily run `39062348739` 三 job 全绿。
+- **首发**：tag **`v0.2.0`**（仅推此 tag，本地 96 个上游 tag 一律未推）；Release run `39062966739` success；4 个核心资产已上传（install.sh / install.ps1 / 两个 chrome-fix），版本注入 `0.2.0` 校验通过；release notes 已替换为中文手写版；Build clawgod-import（run `39062966635`）并行构建 5 平台导入工具。
+
