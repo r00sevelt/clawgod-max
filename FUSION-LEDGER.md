@@ -46,8 +46,28 @@
   - ③ **待人工复核**（可能真实/环境相关）：enhancement-config（438 ≠ 384）、installer-registry-download（archive missing package/claude.exe）
 - 版本归因实验（10-17 完成）：上述 18 项用 **Bun 1.4.2** 复跑 → **0/18 翻绿，全部照旧失败** → 判定为**平台/测试设计差异，与 Bun 版本无关**；③类两项（enhancement-config 438≠384、installer-registry-download 缺 `package/claude.exe`）留待人工复核。
 
+## 云端验收结果（10-17 · run 39025786306 · workflow_dispatch）
+
+- 三 job（Linux/macOS/windows-smoke）全红，**共同根因**：CC **2.1.302** 的 CellSegmenter 渲染器形态未被识别 → **fail-closed 拒绝安装**（原文：`error: 此 Claude Code 依赖私有 Bun.ant.CellSegmenter，且渲染器形态未被 ClawGod 识别；已拒绝安装，避免产生无法进入交互界面的运行时`）。E2E 抓取 `@latest`=2.1.302；基座适配停在 301。
+- 先通过项：Linux/macOS「Run Bun regression suite」✓；Windows「5 项 parity 回归 + PowerShell patch fallback」✓——倒在安装生命周期（同一 302 根因）。
+- **定性：这就是触发线事件本身**——"2.1.302 渲染器适配"成为 clawgod-max 首个任务（**v0.1-d**）；上游 plus 同样未适配（其最新 release 停在 301）。
+- **工作流定调（用户令）：云优先**——本地只做提取/对比/改源码；一切安装与 E2E 验证经 push + `workflow_dispatch` 在 Actions 跑。
+
 ## 里程碑
 
 - [x] v0.1-a 基座搬运（2026-10-17：clone plus → 工作树、三 remote 就位）
 - [ ] v0.1-b 全量测试矩阵跑通（`tests/*.mjs`，bun 1.3.14）
 - [ ] v0.1-c 首次推送 r00sevelt/clawgod-max
+
+## v0.1-d：Claude Code 2.1.302 适配（10-17 完成，待云端验收）
+
+- **根因**：302 改变了渲染器模块结构（共享 CellSegmenter 工厂块与 299-301 参考结构一致，但渲染器与名称校验模块结构改变），结构识别与 301 冻结档案均不匹配 → fail-closed 拒绝安装。
+- **方法**（"新版本冻结档案"流程，本次已固化）：
+  1. 从 npm 拉取目标版本三平台包 → 仓库提取器提取（win32 2683 / linux 2686 / darwin 2705 模块，全部 0 dropped）；
+  2. 角色扫描：ps-like 工厂调用 / class+stylePool 标记 / sanitize / 4 参数 setCell / 7 参数 writeLine / widthMask·emptyCharIndex·spacerCharIndex·emptyWord·chalkGeneration·charPool/hyperlink intern·styleId 链 / tabWidth / 切片器；
+  3. 依赖块=渲染器导入且含 tokenizer(`t=Number.POSITIVE_INFINITY`)+normalizer 签名的分块；文本块=含共享 specifier+工厂调用的非渲染器分块；**切片器必须是被渲染器导入的核心函数**（win32=sjo / linux=ejo / darwin=Ijo；注意 wrapper（pde/ide/fde）未被导入，勿选）；
+  4. shape 摘要=声明切片（findDeclarationEnd）sha256，与 301 档案格式逐字段对齐（已用 301 真实提取物复现全部字段验证方法）。
+- **实现**：`src/generic/runtime/post-processor.mjs` 新增 3 条 2.1.302 冻结档案；dist 由 bun canary（1.4.4）重建、`build.mjs --check` 自检一致。
+- **本机验证**：三平台真实模块图沙盒模拟（post-process 全流程）→ 适配成功、0 个 `Bun.ant.CellSegmenter` 残留、cli.original.cjs 产出；runtime-cell-segmenter 94 项契约 + runtime-cell-structure + bun-only-policy 全绿。
+- **待办**：云端 E2E 验收（compat-daily）；302 夹具与单测矩阵（v0.1-d.1，可选）。
+
