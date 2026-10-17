@@ -773,6 +773,7 @@ try {
   assert.equal(isolatedRuntime.shimDir, shimDir);
   assert.equal(isolatedRuntime.markerPath, markerPath);
   isolatedEnv = isolatedRuntime.env;
+  isolatedEnv.CLAWGOD_CGDBG = '1';
   console.log(validateEnvironmentIsolation(tempHome, isolatedRuntime));
 
   mkdirSync(shimDir, { recursive: true });
