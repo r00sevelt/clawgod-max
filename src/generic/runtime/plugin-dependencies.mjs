@@ -2389,10 +2389,12 @@ function cleanupCreatedCacheParents(cacheTransaction, spec) {
 
 function runPluginCli(args, spec, context) {
   let result;
+  let debugTrace = false;
   try {
     if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli ${JSON.stringify(args)}\n`);
     if (process.env.CLAWGOD_CGDBG === '1' && !runPluginCli.cgdbgProbed) {
       runPluginCli.cgdbgProbed = true;
+      debugTrace = true;
       try {
         const v = context.spawnSyncImpl({
           cmd: [context.bunPath, context.claudeCliPath, '--version'],
@@ -2402,25 +2404,6 @@ function runPluginCli(args, spec, context) {
         if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe version exit=${v.exitCode} out=${JSON.stringify(String(v.stdout || '').slice(0, 300))} err=${JSON.stringify(String(v.stderr || '').slice(0, 300))}\n`);
       } catch (error) {
         if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe version error ${error?.message || String(error)}\n`);
-      }
-      if (process.platform === 'linux') {
-        try {
-          const tracePath = '/tmp/clawgod-cgdbg.trace';
-          const t = context.spawnSyncImpl({
-            cmd: ['strace', '-f', '-tt', '-s', '160', '-o', tracePath, '--', context.bunPath, context.claudeCliPath, ...args],
-            env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
-            stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 45000,
-          });
-          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace exit=${t.exitCode}\n`);
-          try {
-            const lines = String(readFileSync(tracePath, 'utf8')).trim().split('\n');
-            if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write('[cgdbg] trace tail:\n' + lines.slice(-60).join('\n') + '\n');
-          } catch (error) {
-            if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] trace read failed ${error?.message || String(error)}\n`);
-          }
-        } catch (error) {
-          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace error ${error?.message || String(error)}\n`);
-        }
       }
     }
     result = context.spawnSyncImpl({
@@ -2435,6 +2418,34 @@ function runPluginCli(args, spec, context) {
     if (result.exitCode !== 0) {
       if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli out=${JSON.stringify(String(result.stdout || '').slice(-600))}\n`);
       if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli err=${JSON.stringify(String(result.stderr || '').slice(-600))}\n`);
+    }
+    if (debugTrace && process.platform === 'linux') {
+      try {
+        const t = context.spawnSyncImpl({
+          cmd: ['timeout', '-s', 'KILL', '45', 'strace', '-f', '-tt', '-s', '160', '-y', '-o', '/tmp/clawgod-cgdbg.trace', '--', context.bunPath, context.claudeCliPath, ...args],
+          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
+          stdin: 'ignore', stdout: 'ignore', stderr: 'ignore', timeout: 90000,
+        });
+        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace exit=${t.exitCode}\n`);
+        try {
+          const lines = String(readFileSync('/tmp/clawgod-cgdbg.trace', 'utf8')).trim().split('\n');
+          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write('[cgdbg] trace tail:\n' + lines.slice(-100).join('\n') + '\n');
+        } catch (error) {
+          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] trace read failed ${error?.message || String(error)}\n`);
+        }
+      } catch (error) {
+        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace error ${error?.message || String(error)}\n`);
+      }
+      try {
+        const p = context.spawnSyncImpl({
+          cmd: ['timeout', '-s', 'KILL', '20', context.bunPath, context.claudeCliPath, 'plugin', 'list'],
+          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
+          stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 30000,
+        });
+        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe plugin list exit=${p.exitCode} out=${JSON.stringify(String(p.stdout || '').slice(0, 400))} err=${JSON.stringify(String(p.stderr || '').slice(0, 400))}\n`);
+      } catch (error) {
+        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe plugin list error ${error?.message || String(error)}\n`);
+      }
     }
   } catch (error) {
     if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli error ${error?.message || String(error)}\n`);
