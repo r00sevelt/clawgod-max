@@ -5399,13 +5399,45 @@ function runPluginCli(args, spec, context) {
   let result;
   try {
     process.stderr.write(`[cgdbg] cli ${JSON.stringify(args)}\n`);
+    if (!runPluginCli.cgdbgProbed) {
+      runPluginCli.cgdbgProbed = true;
+      try {
+        const v = context.spawnSyncImpl({
+          cmd: [context.bunPath, context.claudeCliPath, '--version'],
+          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
+          stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 30000,
+        });
+        process.stderr.write(`[cgdbg] probe version exit=${v.exitCode} out=${JSON.stringify(String(v.stdout || '').slice(0, 300))} err=${JSON.stringify(String(v.stderr || '').slice(0, 300))}\n`);
+      } catch (error) {
+        process.stderr.write(`[cgdbg] probe version error ${error?.message || String(error)}\n`);
+      }
+      if (process.platform === 'linux') {
+        try {
+          const tracePath = '/tmp/clawgod-cgdbg.trace';
+          const t = context.spawnSyncImpl({
+            cmd: ['strace', '-f', '-tt', '-s', '160', '-o', tracePath, '--', context.bunPath, context.claudeCliPath, ...args],
+            env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
+            stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 45000,
+          });
+          process.stderr.write(`[cgdbg] strace exit=${t.exitCode}\n`);
+          try {
+            const lines = String(readFileSync(tracePath, 'utf8')).trim().split('\n');
+            process.stderr.write('[cgdbg] trace tail:\n' + lines.slice(-60).join('\n') + '\n');
+          } catch (error) {
+            process.stderr.write(`[cgdbg] trace read failed ${error?.message || String(error)}\n`);
+          }
+        } catch (error) {
+          process.stderr.write(`[cgdbg] strace error ${error?.message || String(error)}\n`);
+        }
+      }
+    }
     result = context.spawnSyncImpl({
       cmd: [context.bunPath, context.claudeCliPath, ...args],
       env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
       stdin: 'ignore',
       stdout: 'pipe',
       stderr: 'pipe',
-      timeout: 120000,
+      timeout: 45000,
     });
     process.stderr.write(`[cgdbg] cli done exit=${result.exitCode}\n`);
     if (result.exitCode !== 0) {
