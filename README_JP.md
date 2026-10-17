@@ -1,18 +1,18 @@
-# ClawGod Plus
+# ClawGod Max
 
 [English](README_EN.md) | [简体中文](README.md) | **日本語**
 
-> [0Chencc/clawgod](https://github.com/0Chencc/clawgod) をベースに継続メンテナンスしている拡張ブランチです。Claude Code をサードパーティ製クライアントで置き換えるのではなく、公式ランタイム上に構築されています。
+> [0Chencc/clawgod](https://github.com/0Chencc/clawgod) と [A6083450/clawgod-plus](https://github.com/A6083450/clawgod-plus) を融合した自主メンテナンスの拡張ブランチです。Claude Code をサードパーティ製クライアントで置き換えるのではなく、公式ランタイム上に構築されています。
 
-ClawGod Plus は Claude Code の Bun standalone バイナリに埋め込まれた JavaScript を抽出し、バージョン差分に強いパッチを適用して、変更済み CLI を Bun で実行します。このブランチは上流の全機能を維持しながら、ブラウザ、Computer Use、コンテキストウィンドウ、claude-mem、Worker ランタイム、回帰テストを強化しています。
+ClawGod Max は Claude Code の Bun standalone バイナリに埋め込まれた JavaScript を抽出し、バージョン差分に強いパッチを適用して、変更済み CLI を Bun で実行します。このブランチは上流の全機能を維持しながら、ブラウザ、Computer Use、コンテキストウィンドウ、claude-mem、Worker ランタイム、回帰テストを強化しています。
 
-![ClawGod Plus パッチ済みランタイム](bypass.png)
+![ClawGod Max パッチ済みランタイム](bypass.png)
 
 ## 機能
 
 | 機能 | 説明 |
 |---|---|
-| **claude-mem 互換性** | claude-mem の `.env` に資格情報をコピーせず、設定済み ClawGod Plus Provider を再利用できます。管理対象設定のバックアップ、後から行ったユーザー変更の保持、Worker 再起動、古い Chroma プロセスの整理、アンインストール時の復元にも対応します。 |
+| **claude-mem 互換性** | claude-mem の `.env` に資格情報をコピーせず、設定済み ClawGod Max Provider を再利用できます。管理対象設定のバックアップ、後から行ったユーザー変更の保持、Worker 再起動、古い Chroma プロセスの整理、アンインストール時の復元にも対応します。 |
 | **API キーモードの Claude in Chrome** | OAuth サブスクリプションブリッジを使わず、ローカル Chrome 拡張の socket または named pipe を利用します。Agent ディスパッチでも `--chrome` と `--no-chrome` を維持します。 |
 | **Computer Use をデフォルト有効化** | Feature Gate を外部設定化し、Computer Use をデフォルトで有効にします。cmux や stream-json などの非対話 Worker でも利用でき、機械処理向けコマンドには `--chrome` を自動注入しないため、空白タブの反復生成を防ぎます。 |
 | **設定可能なコンテキスト上限** | ハードコードされたローカル 200K fallback を、`CLAUDE_CODE_CONTEXT_LIMIT`、`CLAUDE_CODE_MAX_CONTEXT_TOKENS`、200K の順で解決するよう変更し、チェックと復元モードも提供します。 |
@@ -43,26 +43,26 @@ ClawGod Plus は Claude Code の Bun standalone バイナリに埋め込まれ�
 
 ## 必要条件
 
-ClawGod Plus でインストール済みの JavaScript ランタイムとして必要なのは **Bun 1.3.14 以上**だけです。インストーラとすべての独立パッチツールは Bun で実行されます。
+ClawGod Max でインストール済みの JavaScript ランタイムとして必要なのは **Bun 1.3.14 以上**だけです。インストーラとすべての独立パッチツールは Bun で実行されます。
 
 macOS/Linux では Shell、Windows では PowerShell を OS のコマンド入口として使用します。Shell と PowerShell は別の JavaScript ランタイムではありません。
 
 インストーラは npm Registry から現行プラットフォーム向け公式 `@anthropic-ai/claude-code-<platform>` パッケージを取得し、プライベート管理の **ripgrep 15.2.0** をダウンロードして検証します。Claude Code、Node.js、npm、システム ripgrep を事前に導入する必要はありません。
 
-## ClawGod Plus をインストール
+## ClawGod Max をインストール
 
-以下のコマンドは、固定バージョン（v2026.10.16-claude.2.1.301）の ClawGod Plus Release アセットをダウンロードします。
+以下のコマンドは、固定バージョン（v0.2.0）の ClawGod Max Release アセットをダウンロードします。
 
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.sh | bash
+curl -fsSL https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.ps1 | iex
+irm https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.ps1 | iex
 ```
 
 主なインストーラオプション（バージョン未指定時は現在インストール済みの Claude Code バージョンを維持し、新規インストール時のみ最新を取得）：
@@ -80,7 +80,7 @@ bash install.sh --lean-off        # 全ツールを復元。デフォルト
 
 ## 任意の拡張機能（Enhancements）
 
-ClawGod Plus は 21 の任意拡張機能を提供し、デフォルトで全て有効です。拡張機能 ID は固定されており、次の順序です。
+ClawGod Max は 21 の任意拡張機能を提供し、デフォルトで全て有効です。拡張機能 ID は固定されており、次の順序です。
 
 | 種類 | 拡張機能 ID |
 |---|---|
@@ -102,7 +102,7 @@ ClawGod Plus は 21 の任意拡張機能を提供し、デフォルトで全て
 端末でインストーラーを直接実行すると自動で質問されるため、引数を覚える必要はありません：
 
 ```
-  ClawGod Plus 拡張機能の選択
+  ClawGod Max 拡張機能の選択
    1) 全21項目（既定、Enter で選択）
    2) コアのみ（拡張機能なし）
    3) カスタム（項目ごとに選択）
@@ -202,7 +202,7 @@ CLAWGOD_NO_AUTO_CHROME=1 claude
 
 ## 推奨コンパニオン：Claude HUD
 
-ClawGod Plus のマルチエージェント処理や長時間タスクには、ステータスラインプラグイン [Claude HUD](https://github.com/jarrodwatts/claude-hud) を推奨します。別ウィンドウを開かずに、モデルとコンテキストの状態、プロジェクトと Git、Claude 設定数、使用量、ツール、Agent、Todo、コスト、速度、セッション時間を常時確認できます。
+ClawGod Max のマルチエージェント処理や長時間タスクには、ステータスラインプラグイン [Claude HUD](https://github.com/jarrodwatts/claude-hud) を推奨します。別ウィンドウを開かずに、モデルとコンテキストの状態、プロジェクトと Git、Claude 設定数、使用量、ツール、Agent、Todo、コスト、速度、セッション時間を常時確認できます。
 
 インストールと更新のたびに、次の任意 Claude Code プラグイン依存関係を自動確認します。
 
@@ -214,7 +214,7 @@ ClawGod Plus のマルチエージェント処理や長時間タスクには、�
 
 未導入またはベースライン未満なら固定ベースラインを導入し、インストール済みの新しいバージョンを維持します。公開固定アーカイブは GitHub から直接ダウンロードし、正確なバイト長と固定 SHA-256 の両方が一致した場合だけ展開します。インストールが必要な JavaScript ランタイムは引き続き Bun だけです。
 
-HUD では、インストーラが以下の正確な profile を維持し、`~/.claude/settings.json` の `statusLine` フィールドだけを管理します。このコマンドは Bun の絶対パスで管理対象の `claude-hud-statusline.mjs` を実行し、Node や Bash のステータスラインランタイムを追加しません。任意プラグインの警告が発生しても ClawGod Plus 本体のインストールは失敗しません。
+HUD では、インストーラが以下の正確な profile を維持し、`~/.claude/settings.json` の `statusLine` フィールドだけを管理します。このコマンドは Bun の絶対パスで管理対象の `claude-hud-statusline.mjs` を実行し、Node や Bash のステータスラインランタイムを追加しません。任意プラグインの警告が発生しても ClawGod Max 本体のインストールは失敗しません。
 
 以下の画像は、この推奨設定をマルチエージェントセッションで使用した実際の表示例です。
 
@@ -342,15 +342,15 @@ CLAUDE_CODE_CONTEXT_LIMIT=1000000 claude
 claude-mem がインストールされ、Claude Provider に設定されている場合、インストーラは次を行えます。
 
 - 選択した claude-mem の Hook と MCP エントリポイントを Bun で実行する。
-- claude-mem の `.env` に資格情報を書かず、現在の ClawGod Plus Provider または Claude 設定を再利用する。
-- 専用 ClawGod Plus Launcher 経由で claude-mem SDK サブプロセスを起動する。
+- claude-mem の `.env` に資格情報を書かず、現在の ClawGod Max Provider または Claude 設定を再利用する。
+- 専用 ClawGod Max Launcher 経由で claude-mem SDK サブプロセスを起動する。
 - 互換ヘルパーが管理する設定だけをバックアップし、アンインストール時に復元する。
 - インストール後にユーザーが変更した claude-mem 設定を上書きしない。
 - 重複した古い Chroma MCP プロセスを整理して Worker を再起動する。
 
-claude-mem が存在しない、別 Provider を使用している、有効な資格情報がない、またはユーザー所有の競合設定がある場合でも、ClawGod Plus 本体のインストールは継続し、それらの設定を管理対象にしません。
+claude-mem が存在しない、別 Provider を使用している、有効な資格情報がない、またはユーザー所有の競合設定がある場合でも、ClawGod Max 本体のインストールは継続し、それらの設定を管理対象にしません。
 
-管理対象の統合状態は fail-closed です。未知の上位 claude-mem 所有 schema は保持し、Bun 未検証として報告します。ClawGod Plus はその状態を書き換えたり削除したりしません。
+管理対象の統合状態は fail-closed です。未知の上位 claude-mem 所有 schema は保持し、Bun 未検証として報告します。ClawGod Max はその状態を書き換えたり削除したりしません。
 
 ## 独立パッチツール
 
@@ -422,13 +422,13 @@ hash -r
 .\install.ps1 -Uninstall
 ```
 
-アンインストールは元の Claude Launcher を復元し、ClawGod Plus エイリアスと生成済みランタイムファイルを削除し、以前の HUD `statusLine` と引き続き ClawGod が所有する claude-mem エントリポイントを復元し、ClawGod 所有のプラグイン helper、state、cache ファイルを削除します。プラグインキャッシュ、Marketplace 登録、claude-mem のメモリデータを保持し、任意プラグイン自体はアンインストールしません。
+アンインストールは元の Claude Launcher を復元し、ClawGod Max エイリアスと生成済みランタイムファイルを削除し、以前の HUD `statusLine` と引き続き ClawGod が所有する claude-mem エントリポイントを復元し、ClawGod 所有のプラグイン helper、state、cache ファイルを削除します。プラグインキャッシュ、Marketplace 登録、claude-mem のメモリデータを保持し、任意プラグイン自体はアンインストールしません。
 
 ## 検証
 
 このブランチには、完全な回帰テスト群があります。Claude Code のパッチ形状、Chrome Agent の引数伝達、非同期 socket fallback、claude-mem の設定所有権と整理、コンテキスト上限、`--no-upgrade` 制御フロー、macOS 貼り付け処理、Worker/Computer Use の起動動作、インストーラーの Bun-only 依存関係と安全なロールバック契約を対象にしています。
 
-ClawGod Plus をインストールせずに実行できます。
+ClawGod Max をインストールせずに実行できます。
 
 ```bash
 for test_file in tests/*.mjs; do
@@ -443,10 +443,11 @@ GitHub 互換性ワークフローでは、さらに Unix の完全インスト�
 
 ## クレジットとライセンス
 
-- [A6083450](https://github.com/A6083450)：ClawGod Plus 拡張ブランチのメンテナ。
+- [r00sevelt](https://github.com/r00sevelt)：ClawGod Max のメンテナ。
+- [A6083450](https://github.com/A6083450)：ClawGod Plus 拡張ブランチの元メンテナ。本プロジェクトはその拡張ブランチを基盤としています。
 - [0Chencc/clawgod](https://github.com/0Chencc/clawgod)：上流プロジェクト。
 - **哈雷佬**：`apply-claude-code-*` パッチ系列と、このブランチへ統合された対応パッチ手法の作者。
-- Anthropic：このプロジェクトがパッチする公式 Claude Code ランタイム。ClawGod Plus は Anthropic と提携していません。
+- Anthropic：このプロジェクトがパッチする公式 Claude Code ランタイム。ClawGod Max は Anthropic と提携していません。
 
 [GPL-3.0](LICENSE) ライセンスで提供します。許可された範囲でのみ使用し、パッチ済み開発ツールを実行するリスクを理解した上で利用してください。
 

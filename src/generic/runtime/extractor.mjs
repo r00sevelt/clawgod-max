@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * ClawGod Plus Bun section extractor
+ * ClawGod Max Bun section extractor
  *
  * Parses the .bun (PE/ELF) or __BUN,__bun (Mach-O) section embedded in a
  * Bun standalone executable, walks the module graph, and extracts:

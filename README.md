@@ -1,18 +1,18 @@
-# ClawGod Plus
+# ClawGod Max
 
 [English](README_EN.md) | **简体中文** | [日本語](README_JP.md)
 
-> 基于 [0Chencc/clawgod](https://github.com/0Chencc/clawgod) 持续维护的增强分支。它直接构建在官方 Claude Code 运行时之上，而不是用第三方客户端替代 Claude Code。
+> 基于 [0Chencc/clawgod](https://github.com/0Chencc/clawgod) 与 [A6083450/clawgod-plus](https://github.com/A6083450/clawgod-plus) 融合的自主维护增强分支，构建在官方 Claude Code 运行时之上，而不是用第三方客户端替代 Claude Code。
 
-ClawGod Plus 从 Claude Code 的 Bun standalone 二进制中提取内嵌 JavaScript，应用跨版本补丁，并通过 Bun 运行修改后的 CLI。本分支保留上游全部能力，同时增强了浏览器、Computer Use、上下文窗口、claude-mem、Worker 运行时和回归测试。
+ClawGod Max 从 Claude Code 的 Bun standalone 二进制中提取内嵌 JavaScript，应用跨版本补丁，并通过 Bun 运行修改后的 CLI。本分支保留上游全部能力，同时增强了浏览器、Computer Use、上下文窗口、claude-mem、Worker 运行时和回归测试。
 
-![ClawGod Plus 补丁运行时](bypass.png)
+![ClawGod Max 补丁运行时](bypass.png)
 
 ## 功能
 
 | 功能 | 说明 |
 |---|---|
-| **claude-mem 兼容** | claude-mem 可复用已配置的 ClawGod Plus Provider，无需把凭据复制到自身 `.env`；支持托管设置备份、保留用户后续修改、重启 Worker、清理失效 Chroma 进程，以及卸载时恢复设置。 |
+| **claude-mem 兼容** | claude-mem 可复用已配置的 ClawGod Max Provider，无需把凭据复制到自身 `.env`；支持托管设置备份、保留用户后续修改、重启 Worker、清理失效 Chroma 进程，以及卸载时恢复设置。 |
 | **API Key 模式下的 Claude in Chrome** | 通过本地 Chrome 扩展 socket 或 named pipe 工作，无需 OAuth 订阅桥接；Agent 派发时保留 `--chrome` 和 `--no-chrome`。 |
 | **Computer Use 默认开启** | 将 Feature Gate 外置、默认启用 Computer Use，并让 cmux、stream-json 等非交互 Worker 也能使用。面向机器的命令不会被自动注入 `--chrome`，避免反复打开空白页。 |
 | **可配置上下文上限** | 将写死的本地 200K fallback 改为依次读取 `CLAUDE_CODE_CONTEXT_LIMIT`、`CLAUDE_CODE_MAX_CONTEXT_TOKENS`，最后回退到 200K，并提供检查与恢复模式。 |
@@ -43,26 +43,26 @@ ClawGod Plus 从 Claude Code 的 Bun standalone 二进制中提取内嵌 JavaScr
 
 ## 前置依赖
 
-ClawGod Plus 只需要一个已安装的 JavaScript 运行时：**Bun 1.3.14 或更高版本**。安装器与所有独立补丁工具都由 Bun 运行。
+ClawGod Max 只需要一个已安装的 JavaScript 运行时：**Bun 1.3.14 或更高版本**。安装器与所有独立补丁工具都由 Bun 运行。
 
 macOS/Linux 请从 Shell 运行安装命令，Windows 请从 PowerShell 运行安装命令；Shell 和 PowerShell 是操作系统的命令入口，不是另一种 JavaScript 运行时。
 
 安装器会从 npm Registry 获取当前平台的官方 `@anthropic-ai/claude-code-<platform>` 包，并下载、校验和私有管理 **ripgrep 15.2.0**。无需预先安装 Claude Code、Node.js、npm 或系统 ripgrep。
 
-## 安装 ClawGod Plus
+## 安装 ClawGod Max
 
-安装命令下载固定版本（v2026.10.16-claude.2.1.301）的 ClawGod Plus Release 资产。
+安装命令下载固定版本（v0.2.0）的 ClawGod Max Release 资产。
 
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.sh | bash
+curl -fsSL https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.ps1 | iex
+irm https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.ps1 | iex
 ```
 
 常用安装参数（不传版本时默认保持当前已安装的 Claude Code 版本，全新安装才拉取最新版）：
@@ -80,7 +80,7 @@ bash install.sh --lean-off        # 恢复完整工具集；默认值
 
 ## 可选增强（Enhancements）
 
-ClawGod Plus 提供 21 项可选增强，默认启用全部。增强 ID 固定且按以下顺序排列：
+ClawGod Max 提供 21 项可选增强，默认启用全部。增强 ID 固定且按以下顺序排列：
 
 | 类型 | 增强 ID |
 |---|---|
@@ -102,7 +102,7 @@ ClawGod Plus 提供 21 项可选增强，默认启用全部。增强 ID 固定�
 在终端里直接运行安装器时会自动询问，无需记参数：
 
 ```
-  ClawGod Plus 增强选择
+  ClawGod Max 增强选择
    1) 全部 21 项增强（默认，回车即选）
    2) 仅核心（不装任何增强）
    3) 自定义菜单（逐项勾选）
@@ -202,7 +202,7 @@ CLAWGOD_NO_AUTO_CHROME=1 claude
 
 ## 推荐搭配：Claude HUD
 
-对于 ClawGod Plus 的多智能体和长时间运行任务，推荐搭配状态栏插件 [Claude HUD](https://github.com/jarrodwatts/claude-hud)。无需打开额外窗口，就能持续看到模型与上下文健康度、项目与 Git 状态、Claude 配置数量、用量、工具、Agent、Todo、成本、速度和会话时长。
+对于 ClawGod Max 的多智能体和长时间运行任务，推荐搭配状态栏插件 [Claude HUD](https://github.com/jarrodwatts/claude-hud)。无需打开额外窗口，就能持续看到模型与上下文健康度、项目与 Git 状态、Claude 配置数量、用量、工具、Agent、Todo、成本、速度和会话时长。
 
 每次安装和更新都会自动确保以下可选 Claude Code 插件依赖：
 
@@ -212,9 +212,9 @@ CLAWGOD_NO_AUTO_CHROME=1 claude
 | claude-mem | `claude-mem@thedotmack` | `13.14.0` |
 | Superpowers | `superpowers@superpowers-marketplace` | `6.2.0` |
 
-缺失或低于基线时，ClawGod Plus 会安装固定基线；如果已经安装了更新版本，则保留已安装的更高版本。公开固定归档直接从 GitHub 拉取，只有字节长度和固定 SHA-256 都精确匹配才会解压。Bun 仍是唯一需要安装的 JavaScript 运行时。
+缺失或低于基线时，ClawGod Max 会安装固定基线；如果已经安装了更新版本，则保留已安装的更高版本。公开固定归档直接从 GitHub 拉取，只有字节长度和固定 SHA-256 都精确匹配才会解压。Bun 仍是唯一需要安装的 JavaScript 运行时。
 
-对于 HUD，安装器保留下面这份精确 profile，并且只托管 `~/.claude/settings.json` 的 `statusLine` 字段。该命令用 Bun 的绝对路径运行托管的 `claude-hud-statusline.mjs`，不会增加 Node 或 Bash 状态栏运行时。可选插件警告不会导致 ClawGod Plus 核心安装失败。
+对于 HUD，安装器保留下面这份精确 profile，并且只托管 `~/.claude/settings.json` 的 `statusLine` 字段。该命令用 Bun 的绝对路径运行托管的 `claude-hud-statusline.mjs`，不会增加 Node 或 Bash 状态栏运行时。可选插件警告不会导致 ClawGod Max 核心安装失败。
 
 下图展示的是这份推荐配置在多智能体会话中的实际效果。
 
@@ -352,15 +352,15 @@ CLAUDE_CODE_CONTEXT_LIMIT=1000000 claude
 安装 claude-mem 并将其配置为 Claude Provider 后，安装器可以：
 
 - 使用 Bun 运行选中的 claude-mem Hook 和 MCP 入口；
-- 复用当前 ClawGod Plus Provider 或 Claude 设置，无需把凭据写入 claude-mem 的 `.env`；
-- 通过专用 ClawGod Plus Launcher 启动 claude-mem SDK 子进程；
+- 复用当前 ClawGod Max Provider 或 Claude 设置，无需把凭据写入 claude-mem 的 `.env`；
+- 通过专用 ClawGod Max Launcher 启动 claude-mem SDK 子进程；
 - 只备份由兼容助手托管的设置，并在卸载时恢复；
 - 避免覆盖安装后由用户手动修改的 claude-mem 设置；
 - 清理重复失效的 Chroma MCP 进程并重启 Worker。
 
-如果 claude-mem 未安装、使用其他 Provider、没有可用凭据，或包含用户自有的冲突设置，ClawGod Plus 核心安装会继续执行，并且不会接管这些设置。
+如果 claude-mem 未安装、使用其他 Provider、没有可用凭据，或包含用户自有的冲突设置，ClawGod Max 核心安装会继续执行，并且不会接管这些设置。
 
-托管集成状态采用 fail-closed 策略。未知的更高 claude-mem 归属 schema 会被保留并报告为未经 Bun 验证；ClawGod Plus 不会重写或删除它。
+托管集成状态采用 fail-closed 策略。未知的更高 claude-mem 归属 schema 会被保留并报告为未经 Bun 验证；ClawGod Max 不会重写或删除它。
 
 ## 独立补丁工具
 
@@ -432,13 +432,13 @@ hash -r
 .\install.ps1 -Uninstall
 ```
 
-卸载会恢复原始 Claude Launcher，移除 ClawGod Plus 别名和生成的运行时文件，恢复之前的 HUD `statusLine` 和仍归 ClawGod 托管的 claude-mem 入口，并删除 ClawGod 自有的插件 helper、state 和 cache 文件。它会保留插件缓存、Marketplace 注册和 claude-mem 记忆数据；卸载 ClawGod Plus 不会卸载这些可选插件。
+卸载会恢复原始 Claude Launcher，移除 ClawGod Max 别名和生成的运行时文件，恢复之前的 HUD `statusLine` 和仍归 ClawGod 托管的 claude-mem 入口，并删除 ClawGod 自有的插件 helper、state 和 cache 文件。它会保留插件缓存、Marketplace 注册和 claude-mem 记忆数据；卸载 ClawGod Max 不会卸载这些可选插件。
 
 ## 验证
 
 本分支包含完整的针对性回归脚本，覆盖 Claude Code 补丁形态、Chrome Agent 参数传递、异步 socket fallback、claude-mem 设置归属与清理、上下文上限、`--no-upgrade` 控制流、macOS 粘贴处理、Worker/Computer Use 启动行为，以及安装器的 Bun-only 依赖与安全回滚契约。
 
-无需安装 ClawGod Plus 即可运行：
+无需安装 ClawGod Max 即可运行：
 
 ```bash
 for test_file in tests/*.mjs; do
@@ -453,10 +453,11 @@ GitHub 兼容性工作流还会执行完整的 Unix 安装和运行时检查。�
 
 ## 致谢与许可证
 
-- [A6083450](https://github.com/A6083450)：ClawGod Plus 增强分支维护者。
+- [r00sevelt](https://github.com/r00sevelt)：ClawGod Max 维护者。
+- [A6083450](https://github.com/A6083450)：ClawGod Plus 增强分支的原维护者；本项目以其增强分支为基座。
 - [0Chencc/clawgod](https://github.com/0Chencc/clawgod)：上游项目。
 - **哈雷佬**：`apply-claude-code-*` 补丁系列，以及本分支所融合对应补丁思路的作者。
-- Anthropic：本项目所修改的官方 Claude Code 运行时；ClawGod Plus 与 Anthropic 没有关联。
+- Anthropic：本项目所修改的官方 Claude Code 运行时；ClawGod Max 与 Anthropic 没有关联。
 
 项目使用 [GPL-3.0](LICENSE) 许可。请仅在获得授权的场景中使用，并自行承担运行补丁开发工具的风险。
 

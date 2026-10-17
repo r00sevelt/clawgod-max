@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * ClawGod Plus Universal Patcher — AST 语义识别与兼容正则补丁
+ * ClawGod Max Universal Patcher — AST 语义识别与兼容正则补丁
  */
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'fs';
 import { dirname, isAbsolute, join } from 'path';
@@ -132,7 +132,7 @@ export async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.s
   const { version } = inspectPatcherSource(code);
 
   console.log(`\n${'═'.repeat(55)}`);
-  console.log('  ClawGod Plus (universal)');
+  console.log('  ClawGod Max (universal)');
   console.log(`  Target: cli.original.cjs (v${version})${hasChunks ? ` + ${modules.length - 1} chunks` : ''}`);
   console.log(`  Mode: ${dryRun ? 'DRY RUN' : verify ? 'VERIFY' : 'APPLY'}`);
   console.log(`  Enhancements: ${selection.enabled.length} enabled, ${enhancementManifest.length - selection.enabled.length} disabled`);

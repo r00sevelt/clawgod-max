@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ClawGod Plus Handbook — Scene Router Hook
+ClawGod Max Handbook — Scene Router Hook
 Claude Code UserPromptSubmit hook
 
 功能：

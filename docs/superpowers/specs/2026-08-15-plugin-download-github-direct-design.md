@@ -1,10 +1,10 @@
-# ClawGod Plus 插件下载源改为 GitHub 直连设计
+# ClawGod Max 插件下载源改为 GitHub 直连设计
 
 日期：2026-08-15
 
 ## 背景
 
-ClawGod Plus 安装器为三个可选增强插件（claude-hud、claude-mem、Superpowers）下载固定 tag 归档时，目前统一经过 `https://hub.211107.xyz/` 镜像代理转发 GitHub。用户要求不再依赖第三方镜像，改为直接从 GitHub 拉取；拉取失败时给出明确的报错说明，而不是现在只有一条 `download failed` 且丢弃了底层错误原因。
+ClawGod Max 安装器为三个可选增强插件（claude-hud、claude-mem、Superpowers）下载固定 tag 归档时，目前统一经过 `https://hub.211107.xyz/` 镜像代理转发 GitHub。用户要求不再依赖第三方镜像，改为直接从 GitHub 拉取；拉取失败时给出明确的报错说明，而不是现在只有一条 `download failed` 且丢弃了底层错误原因。
 
 ## 目标
 

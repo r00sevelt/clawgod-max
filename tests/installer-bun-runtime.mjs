@@ -1890,13 +1890,13 @@ try {
   writeFileSync(join(clawgodDir, 'plugin-dependencies.mjs'), '// lifecycle fixture\n');
   writeFileSync(fakeBun, '#!/bin/sh\n[ "$2" = "ensure" ] || exit 91\nprintf "fixture ensure warning\\n"\nexit 23\n');
   chmodSync(fakeBun, 0o700);
-  const optional = spawnSync('/bin/bash', ['-c', `set -e\nwarn() { printf '%s\\n' "$*" >&2; }\n${unixOptionalBlock}\nprintf 'ClawGod Plus installed!\\n'`], {
+  const optional = spawnSync('/bin/bash', ['-c', `set -e\nwarn() { printf '%s\\n' "$*" >&2; }\n${unixOptionalBlock}\nprintf 'ClawGod Max installed!\\n'`], {
     encoding: 'utf8',
     env: { HOME: home, CLAWGOD_DIR: clawgodDir, BUN_BIN: fakeBun, PATH: fixtureBin },
   });
   assert.equal(optional.status, 0, optional.stderr);
-  assert.match(optional.stderr, /Optional Claude plugin setup could not complete; ClawGod Plus core install will continue/);
-  assert.match(optional.stdout, /ClawGod Plus installed!/, 'an optional ensure warning must not skip the final core success message');
+  assert.match(optional.stderr, /Optional Claude plugin setup could not complete; ClawGod Max core install will continue/);
+  assert.match(optional.stdout, /ClawGod Max installed!/, 'an optional ensure warning must not skip the final core success message');
 } finally {
   rmSync(optionalLifecycleRoot, { recursive: true, force: true });
 }
@@ -1959,7 +1959,7 @@ try {
 
   const stateOnly = runUnixPluginGuard('state-only', { module: false, state: true });
   assert.notEqual(stateOnly.run.status, 0, 'state without its restoration module must fail closed');
-  assert.match(stateOnly.run.stderr, /Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled/);
+  assert.match(stateOnly.run.stderr, /Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled/);
   assert.equal(existsSync(stateOnly.restored), false, 'state-only must not invoke a missing restoration module');
   assert.equal(existsSync(stateOnly.continued), false, 'state-only must not reach claude-mem, launcher, or runtime cleanup');
   for (const artifact of [stateOnly.artifacts.state, stateOnly.artifacts.hud, stateOnly.artifacts.memory, stateOnly.artifacts.launcher, stateOnly.artifacts.runtime]) {
@@ -1978,7 +1978,7 @@ try {
 
   const failedRestore = runUnixPluginGuard('restore-conflict', { module: true, state: true, restoreExit: 42 });
   assert.notEqual(failedRestore.run.status, 0, 'plugin restoration failure must abort uninstall');
-  assert.match(failedRestore.run.stderr, /Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled/);
+  assert.match(failedRestore.run.stderr, /Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled/);
   assert.equal(existsSync(failedRestore.continued), false, 'failed restoration must not reach later cleanup');
   for (const artifact of Object.values(failedRestore.artifacts)) {
     assert.equal(existsSync(artifact), true, `failed restoration must retain ${artifact}`);
@@ -1989,7 +1989,7 @@ try {
 
 assert.match(
   windowsPluginRestoreBlock,
-  /if \(\(Test-Path \$pluginState\) -and -not \(Test-Path \$pluginDependencies\)\) \{[\s\S]*Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled[\s\S]*exit 1[\s\S]*\}\s*if \(Test-Path \$pluginDependencies\)/,
+  /if \(\(Test-Path \$pluginState\) -and -not \(Test-Path \$pluginDependencies\)\) \{[\s\S]*Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled[\s\S]*exit 1[\s\S]*\}\s*if \(Test-Path \$pluginDependencies\)/,
   'PowerShell must implement the same state-only fail-closed and module-present restore/cleanup truth table',
 );
 

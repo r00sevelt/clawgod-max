@@ -1,10 +1,10 @@
-# ClawGod Plus Bun-only 迁移设计
+# ClawGod Max Bun-only 迁移设计
 
 日期：2026-08-09
 
 ## 背景
 
-ClawGod Plus 当前同时依赖 Node.js、npm、Bun 和系统 ripgrep：Node.js 执行提取、后处理、补丁与配置脚本，npm 下载 Anthropic 的平台包，Bun 运行最终生成的 `cli.cjs`，系统 `rg` 为 Grep 工具提供搜索能力。仓库还包含一个基于 npm、Vite 和 TypeScript 的静态站点。
+ClawGod Max 当前同时依赖 Node.js、npm、Bun 和系统 ripgrep：Node.js 执行提取、后处理、补丁与配置脚本，npm 下载 Anthropic 的平台包，Bun 运行最终生成的 `cli.cjs`，系统 `rg` 为 Grep 工具提供搜索能力。仓库还包含一个基于 npm、Vite 和 TypeScript 的静态站点。
 
 Claude Code 2.1.226 的提取产物直接使用 `Bun.hash`、`Bun.spawn`、`Bun.stringWidth`、`Bun.listen` 等 Bun API。Node.js 虽能执行 `--version` 浅层路径，但交互启动会因缺失运行时依赖而失败，继续走 Node-only 将需要长期维护上游兼容层。因此统一到 Bun 比统一到 Node.js 更可靠。
 

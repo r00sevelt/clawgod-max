@@ -1,12 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    ClawGod Plus Installer for Windows
+    ClawGod Max Installer for Windows
 .DESCRIPTION
     Downloads Claude Code from npm, applies feature unlock patches,
     and replaces the 'claude' command with the patched version.
 .EXAMPLE
-    irm https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1 | iex
+    irm https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1 | iex
     # or
     .\install.ps1
     .\install.ps1 -Version 2.1.89
@@ -59,7 +59,7 @@ function Install-ChromeFixScript {
     }
 
     try {
-        & $BunBin (Join-Path $ClawDir "fetch-file.mjs") "https://raw.githubusercontent.com/A6083450/clawgod-plus/main/dist/win/apply-claude-code-chrome-fix.ps1" $dst
+        & $BunBin (Join-Path $ClawDir "fetch-file.mjs") "https://raw.githubusercontent.com/r00sevelt/clawgod-max/main/dist/win/apply-claude-code-chrome-fix.ps1" $dst
         if ($LASTEXITCODE -ne 0) { return $false }
         return $true
     } catch {
@@ -92,10 +92,10 @@ function Invoke-ChromePostInstallFix {
         if ($LASTEXITCODE -eq 0) {
             Write-OK "Claude Code Chrome post-install fix applied"
         } else {
-            Write-Warn "Claude Code Chrome post-install fix did not apply; ClawGod Plus core install will continue"
+            Write-Warn "Claude Code Chrome post-install fix did not apply; ClawGod Max core install will continue"
         }
     } catch {
-        Write-Warn "Claude Code Chrome post-install fix failed; ClawGod Plus core install will continue"
+        Write-Warn "Claude Code Chrome post-install fix failed; ClawGod Max core install will continue"
     }
 }
 
@@ -233,7 +233,7 @@ function Test-ClaudeUninstallConflict {
 }
 
 Write-Host ""
-Write-Host "  ClawGod Plus Installer" -ForegroundColor White -NoNewline
+Write-Host "  ClawGod Max Installer" -ForegroundColor White -NoNewline
 Write-Host " (Windows)" -ForegroundColor DarkGray
 Write-Host ""
 
@@ -257,7 +257,7 @@ if ($Uninstall) {
     $pluginDependencies = Join-Path $ClawDir "plugin-dependencies.mjs"
     $pluginState = Join-Path $ClawDir "plugin-dependencies-state.json"
     if ((Test-Path $pluginState) -and -not (Test-Path $pluginDependencies)) {
-        Write-Warn "Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled"
+        Write-Warn "Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled"
         exit 1
     }
     if (Test-Path $pluginDependencies) {
@@ -272,7 +272,7 @@ if ($Uninstall) {
             & $BunBin $pluginDependencies uninstall
             if ($LASTEXITCODE -ne 0) { throw "optional plugin restore exited $LASTEXITCODE" }
         } catch {
-            Write-Warn "Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled"
+            Write-Warn "Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled"
             $pluginRestoreFailed = $true
         } finally {
             if ($hadPluginBun) { $env:CLAWGOD_BUN_BIN = $previousPluginBun }
@@ -289,7 +289,7 @@ if ($Uninstall) {
             & $BunBin "$ClawDir\claude-mem-compat.cjs" uninstall
             if ($LASTEXITCODE -ne 0) { throw "claude-mem compatibility helper exited $LASTEXITCODE" }
         } catch {
-            Write-Warn "Could not restore claude-mem compatibility settings; ClawGod Plus was not uninstalled"
+            Write-Warn "Could not restore claude-mem compatibility settings; ClawGod Max was not uninstalled"
             exit 1
         }
     }
@@ -304,7 +304,7 @@ if ($Uninstall) {
         Write-Warn "Removed installer-owned polluted backup ($claudeOrig)"
     } elseif ((Test-ClaudePathPresent $claudeCmd) -and (Test-ClawGodLauncher $claudeCmd)) {
         Remove-Item -Force $claudeCmd
-        Write-OK "Removed ClawGod Plus launcher ($claudeCmd)"
+        Write-OK "Removed ClawGod Max launcher ($claudeCmd)"
     }
     # Also check for .exe backup
     if (Test-ValidClaudeOriginal $claudeExeOrig) {
@@ -317,7 +317,7 @@ if ($Uninstall) {
         Write-Warn "Removed installer-owned polluted backup ($claudeExeOrig)"
     } elseif ((Test-ClaudePathPresent $claudeExe) -and (Test-ClawGodLauncher $claudeExe)) {
         Remove-Item -LiteralPath $claudeExe -Force
-        Write-OK "Removed ClawGod Plus launcher ($claudeExe)"
+        Write-OK "Removed ClawGod Max launcher ($claudeExe)"
     }
     # Remove explicit clawgod alias
     $clawgodCmd = Join-Path $BinDir "clawgod.cmd"
@@ -333,7 +333,7 @@ if ($Uninstall) {
     Get-ChildItem -LiteralPath $ClawDir -Filter ".patch-fallback.*.tmp" -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $ClawDir -Filter 'cli.original.js.backup-*' -ErrorAction SilentlyContinue | Remove-Item -Force
     Get-ChildItem -Path $ClawDir -Filter 'cli.original.cjs.backup-*' -ErrorAction SilentlyContinue | Remove-Item -Force
-    Write-OK "ClawGod Plus uninstalled"
+    Write-OK "ClawGod Max uninstalled"
     Write-Host ""
     Write-Dim "Restart your terminal for changes to take effect."
     Write-Host ""
@@ -1012,7 +1012,7 @@ try {
     & $BunBin (Join-Path $ClawDir "plugin-dependencies.mjs") ensure
     if ($LASTEXITCODE -ne 0) { throw "optional plugin ensure exited $LASTEXITCODE" }
 } catch {
-    Write-Warn "Optional Claude plugin setup could not complete; ClawGod Plus core install will continue"
+    Write-Warn "Optional Claude plugin setup could not complete; ClawGod Max core install will continue"
 } finally {
     if ($hadPluginBun) { $env:CLAWGOD_BUN_BIN = $previousPluginBun }
     else { Remove-Item Env:CLAWGOD_BUN_BIN -ErrorAction SilentlyContinue }
@@ -1029,7 +1029,7 @@ try {
         Write-OK "claude-mem compatibility configured"
     }
 } catch {
-    Write-Warn "claude-mem compatibility setup failed; ClawGod Plus core install will continue"
+    Write-Warn "claude-mem compatibility setup failed; ClawGod Max core install will continue"
 } finally {
     Remove-Item Env:CLAWGOD_BUN_BIN -ErrorAction SilentlyContinue
     Remove-Item Env:CLAWGOD_CLAUDE_BIN -ErrorAction SilentlyContinue
@@ -1048,7 +1048,7 @@ if ($userPath -notlike "*$BinDir*") {
 # --- Done ---------------------------------------------
 
 Write-Host ""
-Write-Host "  ClawGod Plus installed!" -ForegroundColor Green
+Write-Host "  ClawGod Max installed!" -ForegroundColor Green
 Write-Host ""
 Write-Dim "  claude            -- Start patched Claude Code (green logo)"
 Write-Dim "  claude.orig       -- Run original unpatched Claude Code"

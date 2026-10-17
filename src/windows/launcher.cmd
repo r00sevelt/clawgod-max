@@ -13,7 +13,7 @@ if /I "%~1"=="import" (
   )
 )
 if not exist "$cliPathInCmd" (
-  echo clawgod: cli.cjs not found. Reinstall: irm https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1 ^| iex
+  echo clawgod: cli.cjs not found. Reinstall: irm https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1 ^| iex
   exit /b 127
 )
 if not exist "$bunPathInCmd" (

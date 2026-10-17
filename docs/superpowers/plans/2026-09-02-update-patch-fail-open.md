@@ -354,8 +354,8 @@ function runSelfUpdate(argv, options = {}) {
 必须显式检查 `fetch-file.mjs` 与 `proxy-fetch.mjs` 都存在，远程 URL 固定为：
 
 ```js
-https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh
-https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1
+https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh
+https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1
 ```
 
 `exitWithOutcome` 对 signal 先尝试 `processObject.kill(processObject.pid, signal)`，失败则 `exit(1)`；普通结果 `exit(status)`。模块末尾必须提供真正的独立 CLI 入口：

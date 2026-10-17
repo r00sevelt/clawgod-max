@@ -274,7 +274,7 @@ for (const [label, localInstallerVersion, duplicateInstallerDeclaration] of [
     assert.deepEqual(outcome, { status: 0, signal: null }, `Windows ${label} must refresh successfully`);
     const fetch = fixture.fetch();
     assert.ok(fetch, `Windows ${label} must not be trusted as a managed local installer`);
-    assert.equal(fetch.url, 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1');
+    assert.equal(fetch.url, 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1');
     assert.deepEqual(
       fixture.invoked()?.args,
       ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', fetch.destination],
@@ -292,7 +292,7 @@ withUpdateFixture('unversioned forced refresh', {
   assert.deepEqual(outcome, { status: 0, signal: null });
   const fetch = fixture.fetch();
   assert.ok(fetch, 'an unversioned update must refresh from the Latest Release installer');
-  assert.equal(fetch.url, 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh');
+  assert.equal(fetch.url, 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh');
   assert.match(fetch.destination, /clawgod-update-/);
   assert.deepEqual(fetch.updateEnv, {
     ...updateEnvSnapshot(),
@@ -346,7 +346,7 @@ withUpdateFixture('Windows remote update flags', { windows: true }, fixture => {
   assert.deepEqual(outcome, { status: 0, signal: null });
   const fetch = fixture.fetch();
   assert.ok(fetch, 'Windows update must fetch its installer');
-  assert.equal(fetch.url, 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1');
+  assert.equal(fetch.url, 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1');
   assert.deepEqual(fetch.updateEnv, {
     ...updateEnvSnapshot(),
     CLAWGOD_NONINTERACTIVE: '1',
@@ -400,7 +400,7 @@ withUpdateFixture('missing fetch helper', { missingFetch: true }, fixture => {
   const outcome = runSelfUpdate(['update'], fixture.options);
   assert.deepEqual(outcome, { status: 1, signal: null });
   assert.equal(fixture.fetch(), null, 'a missing fetch helper must block managed downloading');
-  assert.match(fixture.stderrChunks.join(''), /managed fetch-file\.mjs is missing; reinstall ClawGod Plus/);
+  assert.match(fixture.stderrChunks.join(''), /managed fetch-file\.mjs is missing; reinstall ClawGod Max/);
   assert.deepEqual(fixture.temporaryEntries(), [], 'a missing helper must not leave a temporary directory');
 });
 
@@ -408,7 +408,7 @@ withUpdateFixture('missing proxy companion', { missingProxyFetch: true }, fixtur
   const outcome = runSelfUpdate(['update'], fixture.options);
   assert.deepEqual(outcome, { status: 1, signal: null });
   assert.equal(fixture.fetch(), null, 'a missing proxy companion must block managed downloading');
-  assert.match(fixture.stderrChunks.join(''), /managed proxy-fetch\.mjs is missing; reinstall ClawGod Plus/);
+  assert.match(fixture.stderrChunks.join(''), /managed proxy-fetch\.mjs is missing; reinstall ClawGod Max/);
   assert.deepEqual(fixture.temporaryEntries(), [], 'a missing companion must not leave a temporary directory');
 });
 

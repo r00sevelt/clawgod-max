@@ -1,18 +1,18 @@
-# ClawGod Plus
+# ClawGod Max
 
 **English** | [简体中文](README.md) | [日本語](README_JP.md)
 
-> A maintained, enhanced branch of [0Chencc/clawgod](https://github.com/0Chencc/clawgod), built on the official Claude Code runtime rather than replacing it with a third-party client.
+> A self-maintained enhanced branch that fuses [0Chencc/clawgod](https://github.com/0Chencc/clawgod) with [A6083450/clawgod-plus](https://github.com/A6083450/clawgod-plus), built on the official Claude Code runtime rather than replacing it with a third-party client.
 
-ClawGod Plus extracts the JavaScript embedded in Claude Code's Bun standalone binary, applies a version-tolerant patch set, and runs the patched CLI under Bun. This branch keeps every upstream capability while adding browser, Computer Use, context-window, claude-mem, worker-runtime, and regression-testing improvements.
+ClawGod Max extracts the JavaScript embedded in Claude Code's Bun standalone binary, applies a version-tolerant patch set, and runs the patched CLI under Bun. This branch keeps every upstream capability while adding browser, Computer Use, context-window, claude-mem, worker-runtime, and regression-testing improvements.
 
-![ClawGod Plus patched runtime](bypass.png)
+![ClawGod Max patched runtime](bypass.png)
 
 ## Features
 
 | Feature | Description |
 |---|---|
-| **claude-mem compatibility** | Reuses the configured ClawGod Plus provider for claude-mem without copying credentials into its `.env`; backs up managed settings, respects later user edits, restarts the worker, cleans stale Chroma processes, and restores settings on uninstall. |
+| **claude-mem compatibility** | Reuses the configured ClawGod Max provider for claude-mem without copying credentials into its `.env`; backs up managed settings, respects later user edits, restarts the worker, cleans stale Chroma processes, and restores settings on uninstall. |
 | **Claude in Chrome for API-key mode** | Uses the local Chrome extension socket or named pipe without requiring the OAuth subscription bridge; preserves `--chrome` and `--no-chrome` through agent dispatch. |
 | **Computer Use by default** | Externalizes the feature gate, enables Computer Use by default, and makes it available to noninteractive workers such as cmux and stream-json sessions. Automatic `--chrome` injection is suppressed for machine-oriented commands, preventing repeated blank tabs. |
 | **Configurable context limit** | Replaces the hardcoded local 200K fallback with `CLAUDE_CODE_CONTEXT_LIMIT`, then `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, then 200K. Includes check and restore modes. |
@@ -43,26 +43,26 @@ The enhanced branch retains the full upstream patch set:
 
 ## Prerequisites
 
-ClawGod Plus has one installed JavaScript runtime prerequisite: **Bun 1.3.14 or newer**. The installer and every standalone patch tool run under Bun.
+ClawGod Max has one installed JavaScript runtime prerequisite: **Bun 1.3.14 or newer**. The installer and every standalone patch tool run under Bun.
 
 Use Shell as the operating-system command entry point on macOS/Linux, and PowerShell on Windows. Shell and PowerShell are command entry points, not additional JavaScript runtimes.
 
 The installer fetches the current platform-specific official `@anthropic-ai/claude-code-<platform>` package from the npm Registry, then downloads and verifies its privately managed **ripgrep 15.2.0**. Do not install Claude Code, Node.js, npm, or a system ripgrep first.
 
-## Install ClawGod Plus
+## Install ClawGod Max
 
-These commands download the pinned ClawGod Plus release assets (v2026.10.16-claude.2.1.301).
+These commands download the pinned ClawGod Max release assets (v0.2.0).
 
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.sh | bash
+curl -fsSL https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/A6083450/clawgod-plus/releases/download/v2026.10.16-claude.2.1.301/install.ps1 | iex
+irm https://github.com/r00sevelt/clawgod-max/releases/download/v0.2.0/install.ps1 | iex
 ```
 
 Useful installer options (with no version specified, the installer keeps the currently installed Claude Code version; a fresh install pulls the latest):
@@ -80,7 +80,7 @@ Green branding means the patched runtime is active. The original command is back
 
 ## Optional enhancements
 
-ClawGod Plus offers 21 optional enhancements, all enabled by default. The enhancement IDs are stable and ordered as follows:
+ClawGod Max offers 21 optional enhancements, all enabled by default. The enhancement IDs are stable and ordered as follows:
 
 | Kind | Enhancement ID |
 |---|---|
@@ -102,7 +102,7 @@ With no option and no interactive terminal (piped installs, CI, `claude update`)
 Running the installer directly in a terminal asks automatically, no flags to remember:
 
 ```
-  ClawGod Plus enhancement selection
+  ClawGod Max enhancement selection
    1) All 21 enhancements (default, Enter to select)
    2) Core only (no enhancements)
    3) Custom menu (toggle individual items)
@@ -202,7 +202,7 @@ CLAWGOD_NO_AUTO_CHROME=1 claude
 
 ## Recommended companion: Claude HUD
 
-For ClawGod Plus multi-agent and long-running workflows, [Claude HUD](https://github.com/jarrodwatts/claude-hud) is the recommended statusline companion. It keeps model and context health, project and Git state, Claude configuration counts, usage, tools, agents, todos, cost, speed, and session duration visible without opening another window.
+For ClawGod Max multi-agent and long-running workflows, [Claude HUD](https://github.com/jarrodwatts/claude-hud) is the recommended statusline companion. It keeps model and context health, project and Git state, Claude configuration counts, usage, tools, agents, todos, cost, speed, and session duration visible without opening another window.
 
 Every install and update automatically ensures these optional Claude Code plugin dependencies:
 
@@ -212,9 +212,9 @@ Every install and update automatically ensures these optional Claude Code plugin
 | claude-mem | `claude-mem@thedotmack` | `13.14.0` |
 | Superpowers | `superpowers@superpowers-marketplace` | `6.2.0` |
 
-ClawGod Plus installs a missing or older plugin at the baseline, but preserves any installed newer version. Public fixed archives are downloaded directly from GitHub and are accepted only after their exact byte length and fixed SHA-256 match. Bun remains the only installed JavaScript runtime dependency.
+ClawGod Max installs a missing or older plugin at the baseline, but preserves any installed newer version. Public fixed archives are downloaded directly from GitHub and are accepted only after their exact byte length and fixed SHA-256 match. Bun remains the only installed JavaScript runtime dependency.
 
-For HUD, the installer keeps the exact profile below and manages only the `statusLine` field in `~/.claude/settings.json`. That command invokes the managed `claude-hud-statusline.mjs` with the absolute Bun path; it does not add a Node or Bash status-line runtime. An optional plugin warning is reported without failing the core ClawGod Plus installation.
+For HUD, the installer keeps the exact profile below and manages only the `statusLine` field in `~/.claude/settings.json`. That command invokes the managed `claude-hud-statusline.mjs` with the absolute Bun path; it does not add a Node or Bash status-line runtime. An optional plugin warning is reported without failing the core ClawGod Max installation.
 
 The screenshot below shows this recommended configuration during a multi-agent session.
 
@@ -342,15 +342,15 @@ This changes Claude Code's local 200K constants and checks. It does **not** bypa
 When claude-mem is installed and configured with the Claude provider, the installer can:
 
 - run the selected claude-mem hooks and MCP entrypoints with Bun;
-- reuse the active ClawGod Plus provider or Claude settings without writing credentials into claude-mem's `.env`;
-- route claude-mem SDK subprocesses through a dedicated ClawGod Plus launcher;
+- reuse the active ClawGod Max provider or Claude settings without writing credentials into claude-mem's `.env`;
+- route claude-mem SDK subprocesses through a dedicated ClawGod Max launcher;
 - back up only the settings it manages and restore them during uninstall;
 - avoid overwriting claude-mem settings changed manually after installation;
 - clean duplicate stale Chroma MCP processes and restart the worker.
 
-If claude-mem is absent, uses another provider, has no usable credential, or contains user-owned conflicting settings, the core ClawGod Plus installation continues without taking ownership of those settings.
+If claude-mem is absent, uses another provider, has no usable credential, or contains user-owned conflicting settings, the core ClawGod Max installation continues without taking ownership of those settings.
 
-Managed integration state is fail-closed. An unknown higher claude-mem ownership schema is preserved and reported as not Bun-verified; ClawGod Plus does not rewrite or delete it.
+Managed integration state is fail-closed. An unknown higher claude-mem ownership schema is preserved and reported as not Bun-verified; ClawGod Max does not rewrite or delete it.
 
 ## Standalone patch tools
 
@@ -422,13 +422,13 @@ hash -r
 .\install.ps1 -Uninstall
 ```
 
-Uninstall restores the original Claude launcher, removes the ClawGod Plus alias and generated runtime files, restores the prior HUD `statusLine` and still-owned claude-mem entrypoints, and removes ClawGod-owned plugin helper/state/cache files. It keeps plugin caches, marketplace registrations, and claude-mem memory data; uninstalling ClawGod Plus does not uninstall the optional plugins.
+Uninstall restores the original Claude launcher, removes the ClawGod Max alias and generated runtime files, restores the prior HUD `statusLine` and still-owned claude-mem entrypoints, and removes ClawGod-owned plugin helper/state/cache files. It keeps plugin caches, marketplace registrations, and claude-mem memory data; uninstalling ClawGod Max does not uninstall the optional plugins.
 
 ## Verification
 
 This branch includes a complete focused regression suite covering Claude Code patch shapes, Chrome agent propagation, async socket fallback, claude-mem ownership and cleanup, context limits, `--no-upgrade` control flow, macOS paste handling, worker/Computer Use launch behavior, and the installer's Bun-only dependency and safe-rollback contracts.
 
-Run them without installing ClawGod Plus:
+Run them without installing ClawGod Max:
 
 ```bash
 for test_file in tests/*.mjs; do
@@ -443,10 +443,11 @@ The GitHub compatibility workflow additionally performs an end-to-end Unix insta
 
 ## Credits and license
 
-- [A6083450](https://github.com/A6083450): maintainer of the ClawGod Plus enhanced branch.
+- [r00sevelt](https://github.com/r00sevelt): maintainer of ClawGod Max.
+- [A6083450](https://github.com/A6083450): original maintainer of the ClawGod Plus enhanced branch, on which this project is based.
 - [0Chencc/clawgod](https://github.com/0Chencc/clawgod): upstream project.
 - **哈雷佬**: author of the `apply-claude-code-*` patch families and the corresponding patch approaches integrated into this branch.
-- Anthropic: official Claude Code runtime patched by this project; ClawGod Plus is not affiliated with Anthropic.
+- Anthropic: official Claude Code runtime patched by this project; ClawGod Max is not affiliated with Anthropic.
 
 Licensed under [GPL-3.0](LICENSE). Use only where you are authorized to do so and accept the risks of running a patched development tool.
 

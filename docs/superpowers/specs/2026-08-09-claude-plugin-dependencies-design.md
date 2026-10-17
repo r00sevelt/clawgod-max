@@ -1,10 +1,10 @@
-# ClawGod Plus Claude 插件依赖设计
+# ClawGod Max Claude 插件依赖设计
 
 日期：2026-08-09
 
 ## 背景
 
-ClawGod Plus 已将用户侧 JavaScript 运行时统一为 Bun 1.3.14 或更高版本。当前安装器会在检测到 claude-mem 时配置兼容启动器，但不会安装或升级 claude-hud、claude-mem 与 Superpowers，也不会管理 claude-hud 的状态栏配置。
+ClawGod Max 已将用户侧 JavaScript 运行时统一为 Bun 1.3.14 或更高版本。当前安装器会在检测到 claude-mem 时配置兼容启动器，但不会安装或升级 claude-hud、claude-mem 与 Superpowers，也不会管理 claude-hud 的状态栏配置。
 
 本机当前使用以下插件版本：
 

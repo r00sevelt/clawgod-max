@@ -48,7 +48,7 @@ const generatedSelectionBootstrap = `prepare_enhancement_config_directory\n${gen
 
 assert.ok(generatedUnix.includes(unixLauncher), 'install.sh must embed the canonical Unix launcher source exactly');
 assert.ok(generatedWindows.includes(windowsLauncher), 'install.ps1 must embed the canonical Windows launcher source exactly');
-assert.match(generatedUnix, /ClawGod Plus 增强选择/, 'install.sh must embed the quick enhancement prompt');
+assert.match(generatedUnix, /ClawGod Max 增强选择/, 'install.sh must embed the quick enhancement prompt');
 
 const expectedIds = [
   'chrome',
@@ -560,7 +560,7 @@ function runUnixTtyCase(label, lines, expected, {
     assert.equal(run.status, expectedStatus, `${label}: ${output}`);
     assert.equal(countOccurrences(output, '  Enhancements'), expectedMenuCount, `${label}: exact menu count`);
     assert.equal(countOccurrences(output, '  ↑/↓ 移动'), expectedPromptCount, `${label}: exact prompt count`);
-    assert.equal(countOccurrences(output, 'ClawGod Plus 增强选择'), expectedModeMenuCount, `${label}: exact quick-menu count`);
+    assert.equal(countOccurrences(output, 'ClawGod Max 增强选择'), expectedModeMenuCount, `${label}: exact quick-menu count`);
     for (const warning of expectedWarnings) {
       assert.equal(countOccurrences(output, warning), 1, `${label}: exact warning count for ${warning}`);
     }
@@ -800,7 +800,7 @@ if ($env:CLAWGOD_TEST_KEYS) {
     }
     function Write-EnhancementModeMenu {
         Write-Host ''
-        Write-Host '  ClawGod Plus 增强选择'
+        Write-Host '  ClawGod Max 增强选择'
         Write-Host ('   1) 全部 {0} 项增强（默认，回车即选）' -f $EnhancementIds.Count)
         Write-Host '   2) 仅核心（不装任何增强）'
         Write-Host '   3) 自定义菜单（逐项勾选）'
@@ -869,7 +869,7 @@ if (pwsh) {
   runPowerShell(pwsh, 'ordinary', [], allConfig);
   output = runPowerShell(pwsh, 'auto-enter', [], allConfig, { keySequence: ['Enter'] });
   assert.doesNotMatch(output, /interactive enhancement selection unavailable/i, 'PowerShell auto prompt must not fall back');
-  assert.equal(countOccurrences(output, 'ClawGod Plus 增强选择'), 1, 'PowerShell auto prompt exact quick-menu count');
+  assert.equal(countOccurrences(output, 'ClawGod Max 增强选择'), 1, 'PowerShell auto prompt exact quick-menu count');
   runPowerShell(pwsh, 'auto-core', [], noneConfig, { keySequence: ['D2'] });
   runPowerShell(pwsh, 'auto-custom', [], withoutFirstTwoConfig, { keySequence: ['D3', 'Spacebar', 'DownArrow', 'Spacebar', 'Enter'] });
   runPowerShell(pwsh, 'auto-noninteractive', [], allConfig, {

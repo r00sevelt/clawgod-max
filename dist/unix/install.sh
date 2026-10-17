@@ -3,12 +3,12 @@
 set -e
 
 # ─────────────────────────────────────────────────────────
-#  ClawGod Plus Installer
+#  ClawGod Max Installer
 #
 #  Downloads Claude Code from npm, applies patches, replaces claude command
 #
 #  用法:
-#    curl -fsSL https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh | bash
+#    curl -fsSL https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh | bash
 #    # 或
 #    bash install.sh [--version 2.1.89] [--no-upgrade]
 # ─────────────────────────────────────────────────────────
@@ -316,7 +316,7 @@ choose_enhancement_mode() {
     if [ "$CLAWGOD_MENU_RENDERED_LINES" -gt 0 ]; then
       printf '\033[%dA' "$CLAWGOD_MENU_RENDERED_LINES" > /dev/tty
     fi
-    printf '\n  ClawGod Plus 增强选择\n' > /dev/tty
+    printf '\n  ClawGod Max 增强选择\n' > /dev/tty
     printf '   1) 全部 %d 项增强（默认，回车即选）\n' "$count" > /dev/tty
     printf '   2) 仅核心（不装任何增强）\n' > /dev/tty
     printf '   3) 自定义菜单（逐项勾选）\n' > /dev/tty
@@ -720,14 +720,14 @@ function runSelfUpdate(argv, options = {}) {
     const childEnv = childEnvironment(env, parsed);
 
     if (!isTrustedLocalInstaller({ clawgodDir, installer, platform, explicitVersion: parsed.explicitVersion })) {
-      if (!existsSync(fetchFile)) throw new Error('managed fetch-file.mjs is missing; reinstall ClawGod Plus');
-      if (!existsSync(proxyFetch)) throw new Error('managed proxy-fetch.mjs is missing; reinstall ClawGod Plus');
+      if (!existsSync(fetchFile)) throw new Error('managed fetch-file.mjs is missing; reinstall ClawGod Max');
+      if (!existsSync(proxyFetch)) throw new Error('managed proxy-fetch.mjs is missing; reinstall ClawGod Max');
       temporaryDirectory = mkdtempSync(join(temporaryRoot, 'clawgod-update-'));
       if (!windows) chmodSync(temporaryDirectory, 0o700);
       installer = join(temporaryDirectory, windows ? 'install.ps1' : 'install.sh');
       const remoteUrl = windows
-        ? 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1'
-        : 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh';
+        ? 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1'
+        : 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh';
       const download = outcomeFromResult(
         spawn(execPath, [fetchFile, remoteUrl, installer], { stdio: 'inherit', env: childEnv }),
         'managed installer download did not return an exit status',
@@ -1045,7 +1045,7 @@ is_unstable_claude_path() {
 }
 
 echo ""
-echo -e "${BOLD}  ClawGod Plus Installer${NC}"
+echo -e "${BOLD}  ClawGod Max Installer${NC}"
 echo ""
 
 # ─── Uninstall ─────────────────────────────────────────
@@ -1076,19 +1076,19 @@ if [ "$UNINSTALL" = "1" ]; then
   done
   # Restore optional Claude plugin integrations before any managed cleanup.
   if [ -f "$CLAWGOD_DIR/plugin-dependencies-state.json" ] && [ ! -f "$CLAWGOD_DIR/plugin-dependencies.mjs" ]; then
-    warn "Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled"
+    warn "Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled"
     exit 1
   fi
   if [ -f "$CLAWGOD_DIR/plugin-dependencies.mjs" ]; then
     if ! CLAWGOD_BUN_BIN="$BUN_BIN" CLAWGOD_DIR="$CLAWGOD_DIR" \
       "$BUN_BIN" "$CLAWGOD_DIR/plugin-dependencies.mjs" uninstall; then
-      warn "Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled"
+      warn "Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled"
       exit 1
     fi
   fi
   if [ -f "$CLAWGOD_DIR/claude-mem-compat.cjs" ]; then
     if ! CLAWGOD_BUN_BIN="$BUN_BIN" "$BUN_BIN" "$CLAWGOD_DIR/claude-mem-compat.cjs" uninstall; then
-      warn "Could not restore claude-mem compatibility settings; ClawGod Plus was not uninstalled"
+      warn "Could not restore claude-mem compatibility settings; ClawGod Max was not uninstalled"
       exit 1
     fi
   fi
@@ -1105,17 +1105,17 @@ if [ "$UNINSTALL" = "1" ]; then
     elif is_clawgod_launcher "$DIR/claude"; then
       # Our launcher, no backup — remove it (otherwise it points to deleted cli.js)
       rm -f "$DIR/claude"
-      info "Removed ClawGod Plus launcher ($DIR/claude)"
+      info "Removed ClawGod Max launcher ($DIR/claude)"
     fi
     # Always remove the explicit clawgod alias if it's ours
     if is_clawgod_launcher "$DIR/clawgod"; then
       rm -f "$DIR/clawgod"
-      info "Removed ClawGod Plus alias ($DIR/clawgod)"
+      info "Removed ClawGod Max alias ($DIR/clawgod)"
     fi
   done
   rm -rf "$CLAWGOD_DIR/node_modules" "$CLAWGOD_DIR/vendor" "$CLAWGOD_DIR/bun-runtime" "$CLAWGOD_DIR/assets" "$CLAWGOD_DIR/chunks" "$CLAWGOD_DIR/chunks.bak" "$CLAWGOD_DIR/cli.original.js" "$CLAWGOD_DIR/cli.original.js.bak" "$CLAWGOD_DIR/cli.original.cjs" "$CLAWGOD_DIR/cli.original.cjs.bak" "$CLAWGOD_DIR/cli.js" "$CLAWGOD_DIR/cli.cjs" "$CLAWGOD_DIR/patch.mjs" "$CLAWGOD_DIR/patch.js" "$CLAWGOD_DIR/extract-natives.mjs" "$CLAWGOD_DIR/post-process.mjs" "$CLAWGOD_DIR/repatch.mjs" "$CLAWGOD_DIR/vendor-transaction.mjs" "$CLAWGOD_DIR/runtime-state.cjs" "$CLAWGOD_DIR/startup-check.cjs" "$CLAWGOD_DIR/startup-check.log" "$CLAWGOD_DIR/.clean-source.json" "$CLAWGOD_DIR/self-update.cjs" "$CLAWGOD_DIR/patch-fallback.cjs" "$CLAWGOD_DIR/feature-gates.cjs" "$CLAWGOD_DIR/patch-fallback.json" "$CLAWGOD_DIR/openai-proxy.cjs" "$CLAWGOD_DIR/proxy-fetch.mjs" "$CLAWGOD_DIR/fetch-file.mjs" "$CLAWGOD_DIR/enhancement-config.mjs" "$CLAWGOD_DIR/enhancement-manifest.json" "$CLAWGOD_DIR/install-ripgrep.mjs" "$CLAWGOD_DIR/install-voice-asr.mjs" "$CLAWGOD_DIR/clawgod-import" "$CLAWGOD_DIR/apply-claude-code-chrome-fix.sh" "$CLAWGOD_DIR/claude-mem-compat.cjs" "$CLAWGOD_DIR/claude-mem" "$CLAWGOD_DIR/plugin-dependencies.mjs" "$CLAWGOD_DIR/claude-hud-statusline.mjs" "$CLAWGOD_DIR/plugin-dependencies-state.json" "$CLAWGOD_DIR/cache" "$CLAWGOD_DIR/staging" "$CLAWGOD_DIR/.source-version" "$CLAWGOD_DIR/.clawgod-version" "$CLAWGOD_DIR/.update-check" "$CLAWGOD_DIR/install.sh" "$CLAWGOD_DIR"/.patch-fallback.*.tmp "$CLAWGOD_DIR"/cli.original.js.backup-* "$CLAWGOD_DIR"/cli.original.cjs.backup-*
   hash -r 2>/dev/null
-  info "ClawGod Plus uninstalled"
+  info "ClawGod Max uninstalled"
   echo ""
   warn "  Restart your terminal or run: hash -r"
   echo ""
@@ -6640,7 +6640,7 @@ install_chrome_fix_script() {
 
   if [ -n "$local_src" ] && [ -f "$local_src" ]; then
     cp "$local_src" "$dst"
-  elif "$BUN_BIN" "$CLAWGOD_DIR/fetch-file.mjs" "https://raw.githubusercontent.com/A6083450/clawgod-plus/main/dist/unix/apply-claude-code-chrome-fix.sh" "$dst"; then
+  elif "$BUN_BIN" "$CLAWGOD_DIR/fetch-file.mjs" "https://raw.githubusercontent.com/r00sevelt/clawgod-max/main/dist/unix/apply-claude-code-chrome-fix.sh" "$dst"; then
     :
   else
     return 1
@@ -6676,7 +6676,7 @@ run_claude_code_chrome_fix() {
   if [ "$rc" -eq 0 ]; then
     info "Claude Code Chrome post-install fix applied"
   else
-    warn "Claude Code Chrome post-install fix did not apply; ClawGod Plus core install will continue"
+    warn "Claude Code Chrome post-install fix did not apply; ClawGod Max core install will continue"
   fi
 }
 
@@ -6991,7 +6991,7 @@ fi
 cat > "$CLAWGOD_DIR/extract-natives.mjs" << 'EXTRACTOR_EOF'
 #!/usr/bin/env bun
 /**
- * ClawGod Plus Bun section extractor
+ * ClawGod Max Bun section extractor
  *
  * Parses the .bun (PE/ELF) or __BUN,__bun (Mach-O) section embedded in a
  * Bun standalone executable, walks the module graph, and extracts:
@@ -15153,7 +15153,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "B:/~BUN/root/chunk-cz9nz8bx.js", "digest": "55c9ab80155647017bb241da6f6bb2873c82eed74517c372bfae284106768a19", "factory": "pUn", "renderer": "chunk-cszf1a3v.js", "text": "chunk-xw69qbhq.js", "textDigest": "827f8e311f8eaba8599be4824f831d80d032bcfe1aec3bbf20b83476eeabf221", "textBranch": "if(!X.test(n))return h(N(n));" },
     "tabAnchor": "let Ne=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let Ne=cd(Re);if(Ne.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Mhe)+Mhe)%Mhe;Ne=sjo([\" \".repeat(clawgodTabOffset)+Ne]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
   // 2.1.302 linux：同代 302 结构，逐字段从真实提取物冻结（clawgod-max）。
   {
@@ -15169,7 +15169,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "/$bunfs/root/chunk-stw100w7.js", "digest": "cd7e10377ae9c374e34bf2c32ce13c493d822e88169b638d6feac13af61fa480", "factory": "aUn", "renderer": "chunk-6rjsdck6.js", "text": "chunk-jnazex8d.js", "textDigest": "2458c421b070410c29ebad3c381723270db6a18e30bc98366b911720c3db4526", "textBranch": "if(!X.test(n))return v(N(n));" },
     "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Rhe)+Rhe)%Rhe;we=ejo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
   // 2.1.302 darwin：同代 302 结构，逐字段从真实提取物冻结（clawgod-max）。
   {
@@ -15185,7 +15185,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "/$bunfs/root/chunk-9bpwkp0k.js", "digest": "ac253b69c55a133983e644de0d06349287c869615af46a5f9b9eed64f368a2af", "factory": "AUn", "renderer": "chunk-174fh6cj.js", "text": "chunk-kkq7q3vx.js", "textDigest": "f7aaccd1ea7c54a90d511ba529cdf9b824d975d3c0a2296a085caf41acfcc823", "textBranch": "if(!X.test(n))return M(N(n));" },
     "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
 ];
 
@@ -15440,6 +15440,8 @@ function adaptCellRendererShape(source, { shape, names, tabAnchor, tabReplacemen
     if (createHash('sha256').update(source.slice(start, end + 1)).digest('hex') !== digest) return null;
     spans.push({ start, end: end + 1 });
   }
+  // 第二个 span 必须是行格类：仅凭 header+digest 曾把错误堆栈类误当行格类（Unix CLI 不退出），故以 stylePool;charPool;native= 结构标记兜底并 fail-closed。
+  if (!source.slice(spans[1].start, spans[1].end).includes('stylePool;charPool;native=')) return null;
   const replacements = [
     [spans[0], CELL_RENDERER_SOURCE],
     [spans[1], CELL_LINE_CELLS_SOURCE],
@@ -16253,7 +16255,7 @@ if (hasProviderApiKey) {
 }
 
 // claude-mem deliberately starts SDK subprocesses without Claude settings or
-// inherited auth. Its ClawGod Plus-specific launcher marks those subprocesses so the
+// inherited auth. Its ClawGod Max-specific launcher marks those subprocesses so the
 // wrapper can resolve the same provider and Haiku mapping at spawn time without
 // copying credentials into ~/.claude-mem/.env.
 if (!versionOnly && process.env.CLAWGOD_CLAUDE_MEM === '1') {
@@ -16401,7 +16403,7 @@ try {
       process.stderr.write('[clawgod] v' + _uc.v + ' available (installed: v' + _localVer + ") — run 'claude update' to upgrade\n");
     }
     if (!_uc || Date.now() - (_uc.t || 0) > 86400000) {
-      fetch('https://api.github.com/repos/A6083450/clawgod-plus/releases/latest', {
+      fetch('https://api.github.com/repos/r00sevelt/clawgod-max/releases/latest', {
         headers: { 'User-Agent': 'clawgod' },
         signal: AbortSignal.timeout(5000),
       }).then(function(r) { return r.json(); }).then(function(d) {
@@ -24935,7 +24937,7 @@ async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.slice(2)
   const { version } = inspectPatcherSource(code);
   console.log(`
 ${"\u2550".repeat(55)}`);
-  console.log("  ClawGod Plus (universal)");
+  console.log("  ClawGod Max (universal)");
   console.log(`  Target: cli.original.cjs (v${version})${hasChunks ? ` + ${modules.length - 1} chunks` : ""}`);
   console.log(`  Mode: ${dryRun ? "DRY RUN" : verify ? "VERIFY" : "APPLY"}`);
   console.log(`  Enhancements: ${selection.enabled.length} enabled, ${enhancementManifest.length - selection.enabled.length} disabled`);
@@ -25292,7 +25294,7 @@ if [ \"\$1\" = \"import\" ]; then
 fi
 if [ ! -f \"\$CLAWGOD_CLI\" ]; then
   echo \"clawgod: installation at $CLAWGOD_DIR is missing (cli.cjs not found)\" >&2
-  echo \"clawgod: reinstall via  curl -fsSL https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh | bash\" >&2
+  echo \"clawgod: reinstall via  curl -fsSL https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh | bash\" >&2
   echo \"clawgod: or remove this launcher:  rm \\\"\$0\\\"\" >&2
   exit 127
 fi
@@ -25419,14 +25421,14 @@ fi
 
 if ! CLAWGOD_BUN_BIN="$BUN_BIN" CLAWGOD_DIR="$CLAWGOD_DIR" \
   "$BUN_BIN" "$CLAWGOD_DIR/plugin-dependencies.mjs" ensure; then
-  warn "Optional Claude plugin setup could not complete; ClawGod Plus core install will continue"
+  warn "Optional Claude plugin setup could not complete; ClawGod Max core install will continue"
 fi
 
 install_claude_mem_compat_helper
 if CLAWGOD_BUN_BIN="$BUN_BIN" CLAWGOD_CLAUDE_BIN="$CLAUDE_BIN" "$BUN_BIN" "$CLAWGOD_DIR/claude-mem-compat.cjs" install; then
   [ -f "$HOME/.claude-mem/clawgod-settings-backup.json" ] && info "claude-mem compatibility configured"
 else
-  warn "claude-mem compatibility setup failed; ClawGod Plus core install will continue"
+  warn "claude-mem compatibility setup failed; ClawGod Max core install will continue"
 fi
 
 # ─── Check PATH ───────────────────────────────────────
@@ -25451,7 +25453,7 @@ hash -r 2>/dev/null
 # ─── Done ─────────────────────────────────────────────
 
 echo ""
-echo -e "  ${BOLD}${GREEN}ClawGod Plus installed!${NC}"
+echo -e "  ${BOLD}${GREEN}ClawGod Max installed!${NC}"
 echo ""
 dim "  claude            — Start patched Claude Code (green logo)"
 dim "  claude.orig       — Run original unpatched Claude Code"

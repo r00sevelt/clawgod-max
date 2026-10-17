@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ClawGod Plus Handbook — PreToolUse Guard Hook
+ClawGod Max Handbook — PreToolUse Guard Hook
 Claude Code PreToolUse hook
 
 功能：

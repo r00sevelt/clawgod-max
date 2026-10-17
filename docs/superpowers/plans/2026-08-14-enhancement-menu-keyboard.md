@@ -420,7 +420,7 @@ choose_enhancement_mode() {
     if [ "$CLAWGOD_MENU_RENDERED_LINES" -gt 0 ]; then
       printf '\033[%dA' "$CLAWGOD_MENU_RENDERED_LINES" > /dev/tty
     fi
-    printf '\n  ClawGod Plus 增强选择\n' > /dev/tty
+    printf '\n  ClawGod Max 增强选择\n' > /dev/tty
     printf '   1) 全部 %d 项增强（默认，回车即选）\n' "$count" > /dev/tty
     printf '   2) 仅核心（不装任何增强）\n' > /dev/tty
     printf '   3) 自定义菜单（逐项勾选）\n' > /dev/tty
@@ -572,7 +572,7 @@ if ($env:CLAWGOD_TEST_KEYS) {
     }
     function Write-EnhancementModeMenu {
         Write-Host ''
-        Write-Host '  ClawGod Plus 增强选择'
+        Write-Host '  ClawGod Max 增强选择'
         Write-Host ('   1) 全部 {0} 项增强（默认，回车即选）' -f $EnhancementIds.Count)
         Write-Host '   2) 仅核心（不装任何增强）'
         Write-Host '   3) 自定义菜单（逐项勾选）'
@@ -612,7 +612,7 @@ Initialize-EnhancementSelection
 ```js
   output = runPowerShell(pwsh, 'auto-enter', [], allConfig, { keySequence: ['Enter'] });
   assert.doesNotMatch(output, /interactive enhancement selection unavailable/i, 'PowerShell auto prompt must not fall back');
-  assert.equal(countOccurrences(output, 'ClawGod Plus 增强选择'), 1, 'PowerShell auto prompt exact quick-menu count');
+  assert.equal(countOccurrences(output, 'ClawGod Max 增强选择'), 1, 'PowerShell auto prompt exact quick-menu count');
   runPowerShell(pwsh, 'auto-core', [], noneConfig, { keySequence: ['D2'] });
   runPowerShell(pwsh, 'auto-custom', [], withoutFirstTwoConfig, { keySequence: ['D3', 'Spacebar', 'ArrowDown', 'Spacebar', 'Enter'] });
   runPowerShell(pwsh, 'auto-noninteractive', [], allConfig, {
@@ -694,7 +694,7 @@ function Write-EnhancementModeMenu {
         $script:ClawGodMenuTop = [Console]::CursorTop
     }
     Write-Host ''
-    Write-Host '  ClawGod Plus 增强选择'
+    Write-Host '  ClawGod Max 增强选择'
     Write-Host ('   1) 全部 {0} 项增强（默认，回车即选）' -f $EnhancementIds.Count)
     Write-Host '   2) 仅核心（不装任何增强）'
     Write-Host '   3) 自定义菜单（逐项勾选）'
@@ -835,7 +835,7 @@ git commit -m "build: 重建含键盘交互菜单的安装器"
 在终端里直接运行安装器时会自动询问，无需记参数：
 
 ```
-  ClawGod Plus 增强选择
+  ClawGod Max 增强选择
    1) 全部 13 项增强（默认，回车即选）
    2) 仅核心（不装任何增强）
    3) 自定义菜单（逐项勾选）
@@ -853,7 +853,7 @@ git commit -m "build: 重建含键盘交互菜单的安装器"
 When running the installer directly in a terminal it asks automatically, no flags to remember:
 
 ```
-  ClawGod Plus 增强选择
+  ClawGod Max 增强选择
    1) 全部 13 项增强（默认，回车即选）
    2) 仅核心（不装任何增强）
    3) 自定义菜单（逐项勾选）
@@ -871,7 +871,7 @@ The custom menu is keyboard-driven: `↑`/`↓` move the cursor (wrapping at the
 端末でインストーラーを直接実行すると自動で質問されるため、引数を覚える必要はありません：
 
 ```
-  ClawGod Plus 增强选择
+  ClawGod Max 增强选择
    1) 全部 13 项增强（默认，回车即选）
    2) 仅核心（不装任何增强）
    3) 自定义菜单（逐项勾选）

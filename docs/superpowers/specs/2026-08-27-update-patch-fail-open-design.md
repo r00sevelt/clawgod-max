@@ -4,7 +4,7 @@
 
 ## 背景
 
-ClawGod Plus 当前通过 bundle patch 替换 Claude Code 的 `update` action。更新时，installer 下载并提取新版官方 Claude Code，随后运行通用 patcher。只要任一 mandatory patch 因上游代码形状变化而失败，patcher 就返回非零，installer 回滚至旧 runtime。这个 fail-closed 设计保护了运行时完整性，但也导致用户无法及时升级到新版 Claude Code。
+ClawGod Max 当前通过 bundle patch 替换 Claude Code 的 `update` action。更新时，installer 下载并提取新版官方 Claude Code，随后运行通用 patcher。只要任一 mandatory patch 因上游代码形状变化而失败，patcher 就返回非零，installer 回滚至旧 runtime。这个 fail-closed 设计保护了运行时完整性，但也导致用户无法及时升级到新版 Claude Code。
 
 目标是：`claude update` 遇到 **ClawGod bundle 注入兼容性失败**时，仍升级到新版 Claude Code，并以“ClawGod wrapper + clean post-processed official bundle”的方式运行；下载、提取、I/O、native vendor、Bun load 等基础设施错误仍然失败并回滚。
 

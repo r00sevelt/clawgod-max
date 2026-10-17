@@ -105,14 +105,14 @@ function runSelfUpdate(argv, options = {}) {
     const childEnv = childEnvironment(env, parsed);
 
     if (!isTrustedLocalInstaller({ clawgodDir, installer, platform, explicitVersion: parsed.explicitVersion })) {
-      if (!existsSync(fetchFile)) throw new Error('managed fetch-file.mjs is missing; reinstall ClawGod Plus');
-      if (!existsSync(proxyFetch)) throw new Error('managed proxy-fetch.mjs is missing; reinstall ClawGod Plus');
+      if (!existsSync(fetchFile)) throw new Error('managed fetch-file.mjs is missing; reinstall ClawGod Max');
+      if (!existsSync(proxyFetch)) throw new Error('managed proxy-fetch.mjs is missing; reinstall ClawGod Max');
       temporaryDirectory = mkdtempSync(join(temporaryRoot, 'clawgod-update-'));
       if (!windows) chmodSync(temporaryDirectory, 0o700);
       installer = join(temporaryDirectory, windows ? 'install.ps1' : 'install.sh');
       const remoteUrl = windows
-        ? 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.ps1'
-        : 'https://github.com/A6083450/clawgod-plus/releases/latest/download/install.sh';
+        ? 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.ps1'
+        : 'https://github.com/r00sevelt/clawgod-max/releases/latest/download/install.sh';
       const download = outcomeFromResult(
         spawn(execPath, [fetchFile, remoteUrl, installer], { stdio: 'inherit', env: childEnv }),
         'managed installer download did not return an exit status',

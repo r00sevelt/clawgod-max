@@ -14,7 +14,7 @@
 
 ## 配置步骤
 
-### 1. 安装 ClawGod Plus
+### 1. 安装 ClawGod Max
 
 （同 CTF walkthrough，此处省略）
 

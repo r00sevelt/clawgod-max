@@ -152,7 +152,7 @@ if (hasProviderApiKey) {
 }
 
 // claude-mem deliberately starts SDK subprocesses without Claude settings or
-// inherited auth. Its ClawGod Plus-specific launcher marks those subprocesses so the
+// inherited auth. Its ClawGod Max-specific launcher marks those subprocesses so the
 // wrapper can resolve the same provider and Haiku mapping at spawn time without
 // copying credentials into ~/.claude-mem/.env.
 if (!versionOnly && process.env.CLAWGOD_CLAUDE_MEM === '1') {
@@ -300,7 +300,7 @@ try {
       process.stderr.write('[clawgod] v' + _uc.v + ' available (installed: v' + _localVer + ") — run 'claude update' to upgrade\n");
     }
     if (!_uc || Date.now() - (_uc.t || 0) > 86400000) {
-      fetch('https://api.github.com/repos/A6083450/clawgod-plus/releases/latest', {
+      fetch('https://api.github.com/repos/r00sevelt/clawgod-max/releases/latest', {
         headers: { 'User-Agent': 'clawgod' },
         signal: AbortSignal.timeout(5000),
       }).then(function(r) { return r.json(); }).then(function(d) {

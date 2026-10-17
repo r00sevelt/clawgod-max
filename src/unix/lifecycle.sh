@@ -301,7 +301,7 @@ choose_enhancement_mode() {
     if [ "$CLAWGOD_MENU_RENDERED_LINES" -gt 0 ]; then
       printf '\033[%dA' "$CLAWGOD_MENU_RENDERED_LINES" > /dev/tty
     fi
-    printf '\n  ClawGod Plus 增强选择\n' > /dev/tty
+    printf '\n  ClawGod Max 增强选择\n' > /dev/tty
     printf '   1) 全部 %d 项增强（默认，回车即选）\n' "$count" > /dev/tty
     printf '   2) 仅核心（不装任何增强）\n' > /dev/tty
     printf '   3) 自定义菜单（逐项勾选）\n' > /dev/tty

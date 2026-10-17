@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make Bun the only user-installed runtime required to install, update, run, and uninstall ClawGod Plus while preserving all existing CLI, Grep, Chrome, Computer Use, claude-mem, shared collaboration, and `/peers` behavior.
+**Goal:** Make Bun the only user-installed runtime required to install, update, run, and uninstall ClawGod Max while preserving all existing CLI, Grep, Chrome, Computer Use, claude-mem, shared collaboration, and `/peers` behavior.
 
 **Architecture:** Keep `install.sh` and `install.ps1` self-contained, but make every generated JavaScript helper execute under Bun. Both installers embed equivalent Bun modules for npm Registry retrieval and a pinned private ripgrep, and the generated wrapper prepends the private ripgrep directory to `PATH` before loading Claude Code. Remove the static site and prove the resulting dependency boundary with focused tests plus isolated end-to-end installs.
 

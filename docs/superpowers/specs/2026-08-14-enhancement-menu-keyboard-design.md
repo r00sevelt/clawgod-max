@@ -19,7 +19,7 @@ ClawGod 安装器的增强选择菜单（`--choose-enhancements` 与终端直接
 
 ## 交互规格（Unix / Windows 两端一致）
 
-### 顶层「ClawGod Plus 增强选择」菜单（1 全部 / 2 仅核心 / 3 自定义）
+### 顶层「ClawGod Max 增强选择」菜单（1 全部 / 2 仅核心 / 3 自定义）
 
 | 按键 | 行为 |
 |---|---|

@@ -455,7 +455,7 @@ for (const path of paths.docs) {
     `${path} must not document executable Node, npm, or system ripgrep dependencies`,
   );
   if (path.startsWith('README')) {
-    const installSection = source.match(/## (?:安装 ClawGod Plus|Install ClawGod Plus|ClawGod Plus をインストール)[\s\S]*?(?=\n## )/)?.[0];
+    const installSection = source.match(/## (?:安装 ClawGod Max|Install ClawGod Max|ClawGod Max をインストール)[\s\S]*?(?=\n## )/)?.[0];
     assert.equal(typeof installSection, 'string', `${path} must retain its install section`);
     assert.deepEqual(
       findForbiddenDependencies(installSection).filter(match => match.kind === 'system-git'),

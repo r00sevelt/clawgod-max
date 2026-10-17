@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make ClawGod Plus install and maintain claude-hud, claude-mem, and Superpowers with Bun only, while preserving equal or newer plugin versions, keeping Claude Code updates unpinned, and restoring only ClawGod-owned integration state on uninstall.
+**Goal:** Make ClawGod Max install and maintain claude-hud, claude-mem, and Superpowers with Bun only, while preserving equal or newer plugin versions, keeping Claude Code updates unpinned, and restoring only ClawGod-owned integration state on uninstall.
 
 **Architecture:** Keep `install.sh` and `install.ps1` self-contained and embed the same generated `plugin-dependencies.mjs` in both installers. The Bun module classifies installed versions, downloads only missing or older pinned baselines through the existing managed fetcher, safely stages canonical local marketplaces, configures a Bun-only HUD status line, and applies ownership-checked claude-mem launcher rewrites. Core install remains authoritative; plugin work is independently transactional and reports warnings without turning a successful ClawGod install into failure.
 
@@ -658,7 +658,7 @@ Assert in `tests/installer-plugin-dependencies.mjs` and `tests/installer-bun-run
 - `ensure` runs after `cli.original.cjs` smoke and launcher creation, but before `claude-mem-compat.cjs install` restarts its worker;
 - `uninstall` runs before claude-mem compatibility restore, launcher restore, and every `~/.clawgod` cleanup;
 - `plugin-dependencies.mjs`, `claude-hud-statusline.mjs`, state, cache, and temporary transaction artifacts appear in cleanup lists only after successful restoration;
-- ensure warning exit/output does not skip the final `ClawGod Plus installed` message;
+- ensure warning exit/output does not skip the final `ClawGod Max installed` message;
 - uninstall restoration failure leaves the managed scripts/state present and exits nonzero.
 
 Add summary fixtures and require exact cardinality:
@@ -708,7 +708,7 @@ Unix:
 ```bash
 if ! CLAWGOD_BUN_BIN="$BUN_BIN" CLAWGOD_DIR="$CLAWGOD_DIR" \
   "$BUN_BIN" "$CLAWGOD_DIR/plugin-dependencies.mjs" ensure; then
-  warn "Optional Claude plugin setup could not complete; ClawGod Plus core install will continue"
+  warn "Optional Claude plugin setup could not complete; ClawGod Max core install will continue"
 fi
 ```
 
@@ -718,7 +718,7 @@ Run this before the existing claude-mem compatibility helper so a worker restart
 
 - [ ] **Step 5: Invoke uninstall fail-closed before managed cleanup**
 
-If the module and state exist, run `uninstall`. A nonzero status prints `Could not restore optional Claude plugin integrations; ClawGod Plus was not uninstalled` and exits before claude-mem settings, launchers, or managed runtime are removed. On success, continue existing uninstall and remove the generated module, HUD status-line module, state, plugin download cache, and transaction residue. Do not remove `~/.claude/plugins/clawgod-marketplaces`, installed caches, marketplace installs, or plugin enablement.
+If the module and state exist, run `uninstall`. A nonzero status prints `Could not restore optional Claude plugin integrations; ClawGod Max was not uninstalled` and exits before claude-mem settings, launchers, or managed runtime are removed. On success, continue existing uninstall and remove the generated module, HUD status-line module, state, plugin download cache, and transaction residue. Do not remove `~/.claude/plugins/clawgod-marketplaces`, installed caches, marketplace installs, or plugin enablement.
 
 - [ ] **Step 6: Lock Claude Code update semantics**
 

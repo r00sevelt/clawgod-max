@@ -7729,7 +7729,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "B:/~BUN/root/chunk-cz9nz8bx.js", "digest": "55c9ab80155647017bb241da6f6bb2873c82eed74517c372bfae284106768a19", "factory": "pUn", "renderer": "chunk-cszf1a3v.js", "text": "chunk-xw69qbhq.js", "textDigest": "827f8e311f8eaba8599be4824f831d80d032bcfe1aec3bbf20b83476eeabf221", "textBranch": "if(!X.test(n))return h(N(n));" },
     "tabAnchor": "let Ne=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let Ne=cd(Re);if(Ne.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Mhe)+Mhe)%Mhe;Ne=sjo([\" \".repeat(clawgodTabOffset)+Ne]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
   // 2.1.302 linux：同代 302 结构，逐字段从真实提取物冻结（clawgod-max）。
   {
@@ -7745,7 +7745,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "/$bunfs/root/chunk-stw100w7.js", "digest": "cd7e10377ae9c374e34bf2c32ce13c493d822e88169b638d6feac13af61fa480", "factory": "aUn", "renderer": "chunk-6rjsdck6.js", "text": "chunk-jnazex8d.js", "textDigest": "2458c421b070410c29ebad3c381723270db6a18e30bc98366b911720c3db4526", "textBranch": "if(!X.test(n))return v(N(n));" },
     "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Rhe)+Rhe)%Rhe;we=ejo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
   // 2.1.302 darwin：同代 302 结构，逐字段从真实提取物冻结（clawgod-max）。
   {
@@ -7761,7 +7761,7 @@ const CELL_PLATFORM_SHAPES = [
     "shared": { "specifier": "/$bunfs/root/chunk-9bpwkp0k.js", "digest": "ac253b69c55a133983e644de0d06349287c869615af46a5f9b9eed64f368a2af", "factory": "AUn", "renderer": "chunk-174fh6cj.js", "text": "chunk-kkq7q3vx.js", "textDigest": "f7aaccd1ea7c54a90d511ba529cdf9b824d975d3c0a2296a085caf41acfcc823", "textBranch": "if(!X.test(n))return M(N(n));" },
     "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
-    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:dg(n,f,m,p)}"
+    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
 ];
 
@@ -8016,6 +8016,8 @@ function adaptCellRendererShape(source, { shape, names, tabAnchor, tabReplacemen
     if (createHash('sha256').update(source.slice(start, end + 1)).digest('hex') !== digest) return null;
     spans.push({ start, end: end + 1 });
   }
+  // 第二个 span 必须是行格类：仅凭 header+digest 曾把错误堆栈类误当行格类（Unix CLI 不退出），故以 stylePool;charPool;native= 结构标记兜底并 fail-closed。
+  if (!source.slice(spans[1].start, spans[1].end).includes('stylePool;charPool;native=')) return null;
   const replacements = [
     [spans[0], CELL_RENDERER_SOURCE],
     [spans[1], CELL_LINE_CELLS_SOURCE],
