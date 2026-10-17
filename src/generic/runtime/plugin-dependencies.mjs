@@ -2394,11 +2394,16 @@ function runPluginCli(args, spec, context) {
     result = context.spawnSyncImpl({
       cmd: [context.bunPath, context.claudeCliPath, ...args],
       env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
+      stdin: 'ignore',
       stdout: 'pipe',
       stderr: 'pipe',
       timeout: 120000,
     });
     process.stderr.write(`[cgdbg] cli done exit=${result.exitCode}\n`);
+    if (result.exitCode !== 0) {
+      process.stderr.write(`[cgdbg] cli out=${JSON.stringify(String(result.stdout || '').slice(-600))}\n`);
+      process.stderr.write(`[cgdbg] cli err=${JSON.stringify(String(result.stderr || '').slice(-600))}\n`);
+    }
   } catch (error) {
     process.stderr.write(`[cgdbg] cli error ${error?.message || String(error)}\n`);
     throw new Error(`${spec.key}: plugin command failed: ${error?.message || String(error)}`);
