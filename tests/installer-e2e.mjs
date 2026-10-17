@@ -582,7 +582,6 @@ function run(label, executable, args) {
     timeout: 600_000,
   });
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
-  if (output.includes('[cgdbg]')) process.stderr.write(output + '\n');
   if (result.error?.code === 'ETIMEDOUT') {
     throw new Error(`${label} timed out after 600s; partial output above may reveal the hung step\n${output}`);
   }
@@ -773,7 +772,6 @@ try {
   assert.equal(isolatedRuntime.shimDir, shimDir);
   assert.equal(isolatedRuntime.markerPath, markerPath);
   isolatedEnv = isolatedRuntime.env;
-  isolatedEnv.CLAWGOD_CGDBG = '1';
   console.log(validateEnvironmentIsolation(tempHome, isolatedRuntime));
 
   mkdirSync(shimDir, { recursive: true });

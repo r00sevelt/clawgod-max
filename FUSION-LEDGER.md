@@ -69,5 +69,8 @@
   4. shape 摘要=声明切片（findDeclarationEnd）sha256，与 301 档案格式逐字段对齐（已用 301 真实提取物复现全部字段验证方法）。
 - **实现**：`src/generic/runtime/post-processor.mjs` 新增 3 条 2.1.302 冻结档案；dist 由 bun canary（1.4.4）重建、`build.mjs --check` 自检一致。
 - **本机验证**：三平台真实模块图沙盒模拟（post-process 全流程）→ 适配成功、0 个 `Bun.ant.CellSegmenter` 残留、cli.original.cjs 产出；runtime-cell-segmenter 94 项契约 + runtime-cell-structure + bun-only-policy 全绿。
-- **待办**：云端 E2E 验收（compat-daily）；302 夹具与单测矩阵（v0.1-d.1，可选）。
+- **云端验收（10-17 完成）**：GitHub Actions run `39036324713` 三 job 全绿（Linux x64 / macOS ARM64 隔离安装 E2E + windows-smoke）。Linux 日志 `Optional plugins: 3 ready, 0 disabled, 0 warnings`，每次 `plugin marketplace add` 退出码 0。
+- **中途根因与修复（重要教训）**：首版档案在 linux/darwin 上把行格类（`Dd`）锚到了无关的 `class Gd{`（错误堆栈过滤器，含 ignoredPackages/nodeInternals），真正的行格类是 `class rf{stylePool;charPool;native=...}`。适配器因此替换了错误堆栈类、保留真行格类 → 完整启动路径（`plugin marketplace add` / `plugin list`）在 Unix 上干完活却永不退出（strace 证据：空闲 epoll + 每秒一次 `statx ~/.claude.json` 的配置轮询器；`--version` 早退路径不受影响）；Windows 档案锚点正确故全绿。修复 = 改用上游官方 `v2026.10.17-claude.2.1.302` 冻结值（`class rf` + digest `dc68497d…`/`8043a742…`，与我方提取物用 findDeclarationEnd 逐字节核验一致）。
+- **教训（v0.1-d.1 必须落实）**：行格类识别必须以 `stylePool;charPool;native=` 结构标记为准，禁止仅凭 class 关键字/启发式；补上游同款 302 夹具（`cell-renderer-2.1.302-*.txt` 四件套）并加"锚点类必须含 stylePool"断言。
+- **待办**：302 夹具与单测矩阵（v0.1-d.1，可选）。
 

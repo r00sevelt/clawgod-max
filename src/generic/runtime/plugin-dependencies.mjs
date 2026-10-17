@@ -1631,15 +1631,12 @@ export async function downloadAndStage(spec, context) {
     try {
       let result;
       try {
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] download ${spec.key} ${spec.url}\n`);
         result = Bun.spawnSync({
           cmd: [context.bunPath, context.fetchFilePath, spec.url, temporaryArchive],
           env: context.env,
           stdout: 'pipe',
           stderr: 'pipe',
-          timeout: 120000,
         });
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] download done ${spec.key} exit=${result.exitCode}\n`);
       } catch (error) {
         throw new Error(`${spec.key}: download failed from ${spec.url}: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -2389,66 +2386,14 @@ function cleanupCreatedCacheParents(cacheTransaction, spec) {
 
 function runPluginCli(args, spec, context) {
   let result;
-  let debugTrace = false;
   try {
-    if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli ${JSON.stringify(args)}\n`);
-    if (process.env.CLAWGOD_CGDBG === '1' && !runPluginCli.cgdbgProbed) {
-      runPluginCli.cgdbgProbed = true;
-      debugTrace = true;
-      try {
-        const v = context.spawnSyncImpl({
-          cmd: [context.bunPath, context.claudeCliPath, '--version'],
-          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
-          stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 30000,
-        });
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe version exit=${v.exitCode} out=${JSON.stringify(String(v.stdout || '').slice(0, 300))} err=${JSON.stringify(String(v.stderr || '').slice(0, 300))}\n`);
-      } catch (error) {
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe version error ${error?.message || String(error)}\n`);
-      }
-    }
     result = context.spawnSyncImpl({
       cmd: [context.bunPath, context.claudeCliPath, ...args],
       env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
-      stdin: 'ignore',
       stdout: 'pipe',
       stderr: 'pipe',
-      timeout: 45000,
     });
-    if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli done exit=${result.exitCode}\n`);
-    if (result.exitCode !== 0) {
-      if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli out=${JSON.stringify(String(result.stdout || '').slice(-600))}\n`);
-      if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli err=${JSON.stringify(String(result.stderr || '').slice(-600))}\n`);
-    }
-    if (debugTrace && process.platform === 'linux') {
-      try {
-        const t = context.spawnSyncImpl({
-          cmd: ['timeout', '-s', 'KILL', '45', 'strace', '-f', '-tt', '-s', '160', '-y', '-o', '/tmp/clawgod-cgdbg.trace', '--', context.bunPath, context.claudeCliPath, ...args],
-          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
-          stdin: 'ignore', stdout: 'ignore', stderr: 'ignore', timeout: 90000,
-        });
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace exit=${t.exitCode}\n`);
-        try {
-          const lines = String(readFileSync('/tmp/clawgod-cgdbg.trace', 'utf8')).trim().split('\n');
-          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write('[cgdbg] trace tail:\n' + lines.slice(-100).join('\n') + '\n');
-        } catch (error) {
-          if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] trace read failed ${error?.message || String(error)}\n`);
-        }
-      } catch (error) {
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] strace error ${error?.message || String(error)}\n`);
-      }
-      try {
-        const p = context.spawnSyncImpl({
-          cmd: ['timeout', '-s', 'KILL', '20', context.bunPath, context.claudeCliPath, 'plugin', 'list'],
-          env: { ...context.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' },
-          stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: 30000,
-        });
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe plugin list exit=${p.exitCode} out=${JSON.stringify(String(p.stdout || '').slice(0, 400))} err=${JSON.stringify(String(p.stderr || '').slice(0, 400))}\n`);
-      } catch (error) {
-        if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] probe plugin list error ${error?.message || String(error)}\n`);
-      }
-    }
   } catch (error) {
-    if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] cli error ${error?.message || String(error)}\n`);
     throw new Error(`${spec.key}: plugin command failed: ${error?.message || String(error)}`);
   }
   if (result.exitCode !== 0) {
@@ -2698,7 +2643,6 @@ async function deselectedPluginResult(spec, context) {
 }
 
 export async function ensurePluginDependencies(context, selection) {
-  if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write('[cgdbg] ensure begin\n');
   const specs = [PLUGIN_BASELINES.hud, PLUGIN_BASELINES.memory, PLUGIN_BASELINES.superpowers];
   const enabled = enabledPluginKeys(selection);
   const state = { schemaVersion: 1, hud: {}, claudeMem: { files: {} } };
@@ -2713,10 +2657,8 @@ export async function ensurePluginDependencies(context, selection) {
     }
     let marketplace;
     try {
-      if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] plugin ${spec.key}\n`);
       marketplace = await ensureMarketplacePlugin(spec, context);
     } catch (error) {
-      if (process.env.CLAWGOD_CGDBG === '1') process.stderr.write(`[cgdbg] FAILED ${spec.key}: ${error?.message || String(error)}\n`);
       marketplace = warningResult(spec, error);
     }
     if (!shouldConfigurePluginDependency(marketplace) || spec.key === 'superpowers') {
@@ -2824,4 +2766,3 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
-
