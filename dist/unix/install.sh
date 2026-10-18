@@ -15240,9 +15240,9 @@ const CELL_STRUCTURAL_SHAPES = [{
   names: {"Ns": 4385, "Dd": 5711, "Cx": 4486, "xC": 5891, "Dc": 3822, "bn": 4377, "wo": 4370, "Xf": 4371, "jn": 4381, "hht": 70, "Rx": 4538, "xx": 4415, "bGt": 80, "LNr": 54, "MNr": 53, "C8": 71},
   factoryImport: 141, ansiImport: 143,
   renderers: [
-    {"digest": "b7a1060c5b4f6e26072613f018208b916b3beb5afab9f604995072543e6bdd4d", "tabs": "a229d5fa35083b57f8f0a7e0e648c322ddc6a56226ec64eecf604e182c17fcce", "tabWidth": 319, "expandTabs": 329},
-    {"digest": "d26bc9e2c07527a452f7538680130a62ce40633e5040655cf0fe97ddd4c17be9", "tabs": "b7043d4f06591a366b96ab56aeb9a2cf4134376e9239159fc4ddbd46725b9e0d", "tabWidth": 319, "expandTabs": 329},
-    {"digest": "788d9fe44d68c2fb882392dff86141dab077d6eb0bf143d1eb8b2ad476f32cb5", "tabs": "9d0fffe468608835b04f56b77f72e5be55225a023b93ed29256df64f3dd48b1c", "tabWidth": 317, "expandTabs": 327},
+    {"digest": "b7a1060c5b4f6e26072613f018208b916b3beb5afab9f604995072543e6bdd4d", "topBindings": "fa092fc745d9ba26b927a5840e03d9fadc03b433a7e22846a0dbf878e705573e", "tabs": "a229d5fa35083b57f8f0a7e0e648c322ddc6a56226ec64eecf604e182c17fcce", "tabWidth": 319, "expandTabs": 329},
+    {"digest": "d26bc9e2c07527a452f7538680130a62ce40633e5040655cf0fe97ddd4c17be9", "topBindings": "e411db54d6acc70e05f299ebe26632605a9e2f059cc29b3e030ed8946c42fd7a", "tabs": "b7043d4f06591a366b96ab56aeb9a2cf4134376e9239159fc4ddbd46725b9e0d", "tabWidth": 319, "expandTabs": 329},
+    {"digest": "788d9fe44d68c2fb882392dff86141dab077d6eb0bf143d1eb8b2ad476f32cb5", "topBindings": "3562eb1d1687709cb4e9f53e0346118b03d6eb48e8b05e0118960fd9276e6130", "tabs": "9d0fffe468608835b04f56b77f72e5be55225a023b93ed29256df64f3dd48b1c", "tabWidth": 317, "expandTabs": 327},
   ],
   styles: "93ef3689e968970712db14c81c4f3955a24e7d93aae6b3d21ebf24de001e31e4",
   chalk: "2fdd7ca5ded53c63977f6f7efb408920fd99b93e1fee3ce1f25a57d809c27aab",
@@ -15952,8 +15952,12 @@ function frozenCellFamily(source) {
     }
   }
   try {
-    const digest = structuralModule(source).digest;
-    if (CELL_STRUCTURAL_SHAPES.some(profile => profile.renderers.some(renderer => renderer.digest === digest))) {
+    const structure = structuralModule(source);
+    // 绑定集合不变、仅把一个顶层绑定换成自由全局（如 widthMask:vn → unknown）
+    // 时 structural digest 会变。topBindings 指纹能识别这种同家族改动。
+    const bindings = createHash('sha256').update(JSON.stringify(structure.topBindings)).digest('hex');
+    if (CELL_STRUCTURAL_SHAPES.some(profile => profile.renderers.some(renderer =>
+      renderer.digest === structure.digest || renderer.topBindings === bindings))) {
       return true;
     }
   } catch {}
