@@ -7957,6 +7957,566 @@ function startsExpression(previous) {
   return previous === '' || !/[)\]}\w$]/.test(previous);
 }
 
+// ── 结构定位 fallback（冻结档案全部失配时） ───────────────────────────────
+// 冻结档案优先：只有所有冻结形态与 2.1.299 结构档案都失配时才启用。这里用
+// acorn 定位真正的行格类（唯一、含 stylePool/charPool/native 字段）及其
+// header、ANSI 依赖、writeLine 与清理函数，再交回现有的字节级 span+digest
+// 替换路径。候选不唯一、结构不完整或替换后无法解析都返回 null。
+const CELL_ROW_CELL_MARKER = 'stylePool;charPool;native=';
+const CELL_MAPPED_NAMES = Object.freeze([
+  'Ns', 'Dd', 'Cx', 'xC', 'cmr', 'Kf', 'Dc', 'bn', 'wo', 'Xf', 'jn',
+  'Rx', 'xx', 'hht', 'C8', 'MNr', 'LNr', 'bGt',
+]);
+const CELL_TEXT_BRANCH = /if\(![\w$]+\.test\([\w$]+\)\)return [\w$]+\([\w$]+\([\w$]+\)\);/g;
+
+function cellAstChildren(node) {
+  const children = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'start' || key === 'end' || key === 'loc' || key === 'range') continue;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item && typeof item === 'object' && typeof item.type === 'string') children.push(item);
+      }
+    } else if (value && typeof value === 'object' && typeof value.type === 'string') {
+      children.push(value);
+    }
+  }
+  return children;
+}
+
+function cellWalk(node, visit) {
+  if (visit(node) === false) return;
+  for (const child of cellAstChildren(node)) cellWalk(child, visit);
+}
+
+function cellStructured(text, cache) {
+  if (!cache.has(text)) {
+    let structure = null;
+    try { structure = structuralModule(text); } catch {}
+    cache.set(text, structure);
+  }
+  return cache.get(text);
+}
+
+function cellImports(ast) {
+  const bindings = new Map();
+  for (const node of ast.body) {
+    if (node.type !== 'ImportDeclaration') continue;
+    for (const specifier of node.specifiers) {
+      if (specifier.type !== 'ImportSpecifier') continue;
+      bindings.set(specifier.local.name, { imported: specifier.imported.name, declaration: node });
+    }
+  }
+  return bindings;
+}
+
+function cellExports(ast) {
+  const names = new Map();
+  for (const node of ast.body) {
+    if (node.type !== 'ExportNamedDeclaration') continue;
+    if (node.declaration) {
+      const declaration = node.declaration;
+      if ((declaration.type === 'FunctionDeclaration' || declaration.type === 'ClassDeclaration') && declaration.id) {
+        names.set(declaration.id.name, declaration.id.name);
+      } else if (declaration.type === 'VariableDeclaration') {
+        for (const item of declaration.declarations) {
+          if (item.id.type === 'Identifier') names.set(item.id.name, item.id.name);
+        }
+      }
+    }
+    for (const specifier of node.specifiers ?? []) {
+      if (specifier.type === 'ExportSpecifier') names.set(specifier.exported.name, specifier.local.name);
+    }
+  }
+  return names;
+}
+
+function cellExportedFunction(ast, exportedName) {
+  const local = cellExports(ast).get(exportedName);
+  if (!local) return null;
+  return ast.body.find(node => node.type === 'FunctionDeclaration' && node.id?.name === local) ?? null;
+}
+
+function cellReferencesBunAntCellSegmenter(node) {
+  let found = false;
+  cellWalk(node, child => {
+    if (child.type !== 'MemberExpression' || child.computed || child.property.type !== 'Identifier'
+      || child.property.name !== 'CellSegmenter') return;
+    const object = child.object;
+    if (object.type !== 'MemberExpression' || object.computed || object.property.type !== 'Identifier'
+      || object.property.name !== 'ant' || object.object.type !== 'Identifier' || object.object.name !== 'Bun') return;
+    found = true;
+  });
+  return found;
+}
+
+function cellTokenizer(node, source) {
+  if (node.type !== 'FunctionDeclaration' || !node.id || node.params.length < 2) return false;
+  if (node.params[1].type !== 'AssignmentPattern') return false;
+  const declaration = source.slice(node.start, node.body.end);
+  if (!declaration.includes('POSITIVE_INFINITY')) return false;
+  const body = source.slice(node.body.start, node.body.end);
+  return body.includes('codePointAt') && (body.includes('"ansi"') || body.includes("'ansi'"));
+}
+
+function cellNormalizer(node, source) {
+  if (node.type !== 'FunctionDeclaration' || !node.id || node.params.length !== 1) return false;
+  const parameter = node.params[0];
+  if (parameter.type !== 'Identifier') return false;
+  const body = source.slice(node.body.start, node.body.end);
+  const escaped = parameter.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`return\\s+[\\w$]+\\s*\\(\\s*\\[\\s*\\]\\s*,\\s*${escaped}\\s*\\)`).test(body);
+}
+
+function cellMerge(node, source) {
+  if (node.type !== 'FunctionDeclaration' || node.params.length !== 2) return false;
+  const body = source.slice(node.body.start, node.body.end);
+  return body.includes('.reset.open') && body.includes('.endCode');
+}
+
+// 2.1.285+ 直接把渲染参数传给共享工厂；更早的内联形态把它们放在
+// screen:{...} 里。两者都按结构定位，嵌套层数不写死。
+// tabWidth 与制表符展开函数总是来自同一分块。优先解析该分块，按
+// “(text, tabWidth=...) → 数组 map + " ".repeat” 的结构锁定展开函数；
+// 分块不可用时才退回“同分块唯一兄弟绑定”的弱约束。
+function cellTabHelper(hht, ast, dependencies, cache) {
+  const binding = cellImports(ast).get(hht);
+  if (!binding) return null;
+  const text = dependencies.get(basename(binding.declaration.source.value));
+  if (typeof text === 'string') {
+    const structure = cellStructured(text, cache);
+    if (structure) {
+      const candidates = [];
+      for (const [exported, local] of cellExports(structure.ast)) {
+        const declaration = structure.ast.body.find(node => node.type === 'FunctionDeclaration'
+          && node.id?.name === local);
+        if (!declaration || declaration.params.length !== 2) continue;
+        const body = text.slice(declaration.body.start, declaration.body.end);
+        if (!body.includes('.map(') || !body.includes('" ".repeat(')) continue;
+        const second = declaration.params[1];
+        const fallback = second.type === 'AssignmentPattern' ? second.right : second;
+        if (fallback.type !== 'Identifier' || (fallback.name !== hht && fallback.name !== binding.imported)) continue;
+        candidates.push(exported);
+      }
+      if (candidates.length === 1) return candidates[0];
+      if (candidates.length > 1) return null;
+    }
+  }
+  const siblings = new Set();
+  for (const node of ast.body) {
+    if (node.type !== 'ImportDeclaration' || node.source.value !== binding.declaration.source.value) continue;
+    for (const specifier of node.specifiers) {
+      if (specifier.type === 'ImportSpecifier' && specifier.local.name !== hht) siblings.add(specifier.local.name);
+    }
+  }
+  return siblings.size === 1 ? [...siblings][0] : null;
+}
+
+function cellScreenConfig(node) {
+  if (!node || typeof node.type !== 'string') return null;
+  if (node.type === 'ObjectExpression') {
+    const keys = new Set(node.properties.filter(item => item.type === 'Property' && !item.computed
+      && item.key.type === 'Identifier').map(item => item.key.name));
+    if (keys.has('widthMask') && keys.has('tabWidth')) return node;
+  }
+  for (const child of cellAstChildren(node)) {
+    const config = cellScreenConfig(child);
+    if (config) return config;
+  }
+  return null;
+}
+
+function cellAnsiCandidates(ast, dependencies, cache) {
+  const candidates = [];
+  const seen = new Set();
+  for (const node of ast.body) {
+    if (node.type !== 'ImportDeclaration') continue;
+    const file = basename(node.source.value);
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const text = dependencies.get(file);
+    if (typeof text !== 'string') continue;
+    // 只解析具备 ANSI 分词器特征的分块，避免安装时解析整张分块图。
+    if (!text.includes('codePointAt') || !text.includes('POSITIVE_INFINITY')) continue;
+    const structure = cellStructured(text, cache);
+    if (!structure) continue;
+    const exports = cellExports(structure.ast);
+    const tokenizers = [];
+    const normalizers = [];
+    for (const [exported, local] of exports) {
+      const declaration = structure.ast.body.find(item => item.type === 'FunctionDeclaration' && item.id?.name === local);
+      if (!declaration) continue;
+      if (cellTokenizer(declaration, text)) tokenizers.push(exported);
+      if (cellNormalizer(declaration, text)) normalizers.push(exported);
+    }
+    if (tokenizers.length === 1 && normalizers.length === 1 && tokenizers[0] !== normalizers[0]) {
+      candidates.push({ specifier: node.source.value, file, text, tokenizer: tokenizers[0], normalizeStyles: normalizers[0] });
+    }
+  }
+  return candidates;
+}
+
+function cellTextModule(source, sharedText, specifier, factory, dependencies, cache) {
+  const sharedFile = basename(specifier);
+  const candidates = [];
+  for (const [file, text] of dependencies) {
+    if (text === source || text === sharedText) continue;
+    if (!text.includes(sharedFile) || !text.includes(factory) || text.includes(CELL_ROW_CELL_MARKER)) continue;
+    const structure = cellStructured(text, cache);
+    if (!structure) continue;
+    const imports = structure.ast.body.filter(node => node.type === 'ImportDeclaration'
+      && basename(node.source.value) === sharedFile);
+    if (imports.length !== 1) continue;
+    const specifiers = imports[0].specifiers;
+    if (specifiers.length < 2 || specifiers.some(item => item.type !== 'ImportSpecifier')) continue;
+    const bindings = specifiers.filter(item => item.imported.name === factory);
+    if (bindings.length !== 1) continue;
+    let called = false;
+    cellWalk(structure.ast, node => {
+      if (node.type === 'CallExpression' && node.callee.type === 'Identifier'
+        && node.callee.name === bindings[0].local.name) called = true;
+    });
+    if (!called) continue;
+    const branches = [...text.matchAll(CELL_TEXT_BRANCH)];
+    if (branches.length !== 1) continue;
+    candidates.push({ file, text, branch: branches[0][0] });
+  }
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+function cellSharedModule(source, ast, factoryCall, dependencies, cache) {
+  if (factoryCall.type !== 'CallExpression' || factoryCall.callee.type !== 'Identifier') return null;
+  const imports = cellImports(ast);
+  const binding = imports.get(factoryCall.callee.name);
+  if (!binding || binding.imported !== factoryCall.callee.name) return null;
+  const specifier = binding.declaration.source.value;
+  const text = dependencies.get(basename(specifier));
+  if (typeof text !== 'string') return null;
+  const structure = cellStructured(text, cache);
+  if (!structure) return null;
+  const factory = cellExportedFunction(structure.ast, binding.imported);
+  if (!factory || !cellReferencesBunAntCellSegmenter(factory)) return null;
+  const textModule = cellTextModule(source, text, specifier, binding.imported, dependencies, cache);
+  if (!textModule) return null;
+  return {
+    specifier,
+    digest: createHash('sha256').update(text).digest('hex'),
+    factory: binding.imported,
+    text: textModule.file,
+    textDigest: createHash('sha256').update(textModule.text).digest('hex'),
+    textBranch: textModule.branch,
+  };
+}
+
+function cellStyleHelpers(rowClass, imports) {
+  const styleId = rowClass.body.body.find(item => item.type === 'MethodDefinition' && item.kind === 'method'
+    && !item.computed && item.key.type === 'Identifier' && item.key.name === 'styleId');
+  if (!styleId?.value?.body) return null;
+  const pairs = [];
+  cellWalk(styleId.value.body, node => {
+    if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier') return;
+    const inner = node.arguments[0];
+    if (!inner || inner.type !== 'CallExpression' || inner.callee.type !== 'Identifier') return;
+    if (!imports.has(node.callee.name) || !imports.has(inner.callee.name)) return;
+    if (node.callee.name === inner.callee.name) return;
+    pairs.push({ tokenize: inner.callee.name, normalize: node.callee.name });
+  });
+  return pairs.length === 1 ? pairs[0] : null;
+}
+
+function cellCellHelpers(setCell) {
+  const screen = setCell.params[0];
+  if (screen?.type !== 'Identifier') return null;
+  const found = { char: [], hyperlink: [] };
+  cellWalk(setCell.body, node => {
+    if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier' || node.arguments.length !== 2) return;
+    const [first, second] = node.arguments;
+    if (first.type !== 'Identifier' || first.name !== screen.name) return;
+    if (second.type !== 'MemberExpression' || second.computed || second.object.type !== 'Identifier') return;
+    if (second.property.type !== 'Identifier') return;
+    const property = second.property.name;
+    if (property === 'char' || property === 'hyperlink') found[property].push(node.callee.name);
+  });
+  if (found.char.length !== 1 || found.hyperlink.length !== 1) return null;
+  return { Rx: found.char[0], xx: found.hyperlink[0] };
+}
+
+function cellWriteLineInfo(fn, source) {
+  const params = fn.params;
+  if (params.length < 5 || params.some(item => item.type !== 'Identifier')) return null;
+  const line = params[4].name;
+  let segment = null;
+  let clip = false;
+  const directions = [];
+  const clips = [];
+  cellWalk(fn.body, node => {
+    if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && !node.callee.computed
+      && node.callee.object.type === 'Identifier' && node.callee.object.name === line
+      && node.callee.property.type === 'Identifier') {
+      if (node.callee.property.name === 'segment') segment = node;
+      if (node.callee.property.name === 'keepColumns') clip = true;
+    }
+    if (node.type === 'ConditionalExpression') {
+      const test = node.test;
+      const consequent = node.consequent;
+      if (test.type === 'CallExpression' && test.callee.type === 'Identifier' && test.arguments.length === 1
+        && test.arguments[0].type === 'Identifier' && params.some(item => item.name === test.arguments[0].name)
+        && consequent.type === 'BinaryExpression' && consequent.operator === '+'
+        && consequent.left.type === 'MemberExpression'
+        && consequent.left.object.type === 'Identifier') {
+        directions.push({ check: test.callee.name, map: consequent.left.object.name, parameter: test.arguments[0].name });
+      }
+    }
+    if (node.type === 'BinaryExpression' && node.operator === '!=='
+      && node.left.type === 'Identifier' && params.some(item => item.name === node.left.name)
+      && node.right.type === 'UnaryExpression' && node.right.operator === 'void'
+      && node.right.argument.type === 'Literal' && node.right.argument.value === 0) {
+      clips.push(node.left.name);
+    }
+  });
+  if (!segment) return null;
+  const argument = segment.arguments[1];
+  const segmentDirection = argument?.type === 'CallExpression' && argument.callee.type === 'Identifier'
+    && argument.arguments.length === 0 ? argument.callee.name : null;
+  return {
+    fn, params, clip, segmentDirection,
+    direction: directions.length === 1 ? directions[0] : null,
+    clippings: clips,
+  };
+}
+
+function cellMappingSafe(name, names) {
+  return !CELL_MAPPED_NAMES.includes(name) || names[name] === name;
+}
+
+function cellWriteLineSource(info, names) {
+  const direction = info.direction;
+  if (info.params.length < 7 || !direction || !info.segmentDirection || info.clippings.length !== 1) return null;
+  if (direction.parameter !== info.params[5].name || info.clippings[0] !== info.params[6].name) return null;
+  for (const helper of [direction.check, direction.map, info.segmentDirection]) {
+    if (!cellMappingSafe(helper, names)) return null;
+  }
+  return `function xC(n,u,f,m,p,g,R){let T=${direction.check}(g)?${direction.map}[g]+u:u;`
+    + `if(p.segment(T,${info.segmentDirection}()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);`
+    + `return p.count===0?f:paintCells(n,p.cells,f,m)}`;
+}
+
+function cellTabReplacement(out, sanitize, input, width, box, column, names, expand) {
+  const offset = expand
+    ? `${names.C8}([" ".repeat(q)+${out}]).join("").slice(q)`
+    : `${names.C8}(" ".repeat(q)+${out}).slice(q)`;
+  return `let ${out}=${sanitize}(${input});if(${out}.indexOf(String.fromCharCode(9))>=0){`
+    + `let q=((${column}%${names.hht})+${names.hht})%${names.hht};${out}=${offset}}`
+    + `let ${width}=${box}.x2-${column}`;
+}
+
+function astCellProfile(source, dependencies, overrides = {}, cache = new Map()) {
+  if (!source.includes(CELL_ROW_CELL_MARKER)) return null;
+  const structure = cellStructured(source, cache);
+  if (!structure) return null;
+  const ast = structure.ast;
+  const moduleFunctions = ast.body.filter(node => node.type === 'FunctionDeclaration' && node.id);
+  const moduleClasses = ast.body.filter(node => node.type === 'ClassDeclaration' && node.id);
+  const imports = cellImports(ast);
+
+  const rowClasses = moduleClasses.filter(node => {
+    if (!source.slice(node.start, node.end).includes(CELL_ROW_CELL_MARKER)) return false;
+    const fields = new Set(node.body.body.filter(item => item.type === 'PropertyDefinition' && !item.computed
+      && item.key.type === 'Identifier').map(item => item.key.name));
+    const methods = new Set(node.body.body.filter(item => item.type === 'MethodDefinition' && item.kind === 'method'
+      && !item.computed && item.key.type === 'Identifier').map(item => item.key.name));
+    return ['stylePool', 'charPool', 'native'].every(name => fields.has(name))
+      && ['segment', 'paint', 'styleId'].every(name => methods.has(name));
+  });
+  if (rowClasses.length !== 1) return null;
+  const rowClass = rowClasses[0];
+
+  const factoryCalls = [];
+  for (const fn of moduleFunctions) {
+    cellWalk(fn.body, node => {
+      if (node.type !== 'CallExpression' && node.type !== 'NewExpression') return;
+      const config = node.arguments.map(cellScreenConfig).find(Boolean);
+      if (config) factoryCalls.push({ fn, call: node, config });
+    });
+  }
+  if (factoryCalls.length !== 1) return null;
+  const { fn: ns, call: factoryCall, config } = factoryCalls[0];
+
+  const native = rowClass.body.body.find(item => item.type === 'PropertyDefinition' && !item.computed
+    && item.key.type === 'Identifier' && item.key.name === 'native');
+  if (native?.value?.type !== 'CallExpression' || native.value.callee.type !== 'Identifier'
+    || native.value.callee.name !== ns.id.name) return null;
+
+  const property = name => config.properties.find(item => item.type === 'Property' && !item.computed
+    && item.key.type === 'Identifier' && item.key.name === name);
+  const identifier = name => property(name)?.value?.type === 'Identifier' ? property(name).value.name : null;
+  const bn = identifier('widthMask');
+  const wo = identifier('emptyCharIndex');
+  const Xf = identifier('spacerCharIndex');
+  const hht = identifier('tabWidth');
+  const emptyWord = property('emptyWord')?.value;
+  const jn = emptyWord?.type === 'CallExpression' && emptyWord.callee.type === 'Identifier'
+    ? emptyWord.callee.name : null;
+  if (!bn || !wo || !Xf || !hht || !jn) return null;
+
+  const C8 = cellTabHelper(hht, ast, dependencies, cache);
+  if (!C8) return null;
+
+  const style = cellStyleHelpers(rowClass, imports);
+  if (!style) return null;
+  const chalk = rowClass.body.body.find(item => item.type === 'PropertyDefinition' && !item.computed
+    && item.key.type === 'Identifier' && item.key.name === 'chalkGeneration');
+  const bGt = chalk?.value?.type === 'CallExpression' && chalk.value.callee.type === 'Identifier'
+    ? chalk.value.callee.name : null;
+  if (!bGt) return null;
+
+  const setCells = moduleFunctions.filter(fn => source.slice(fn.body.start, fn.body.end).includes('.setCell('));
+  if (setCells.length !== 1) return null;
+  const setCell = setCells[0];
+  const cells = cellCellHelpers(setCell);
+  if (!cells) return null;
+
+  const writeLines = moduleFunctions.map(fn => cellWriteLineInfo(fn, source)).filter(Boolean);
+  if (writeLines.length !== 1) return null;
+  const writeLine = writeLines[0];
+
+  const anchors = [...source.matchAll(/let ([\w$]+)=([\w$]+)\(([\w$]+)\),([\w$]+)=([\w$]+)\.x2-([\w$]+)/g)]
+    .filter(match => moduleFunctions.some(fn => fn.id.name === match[2]));
+  if (anchors.length !== 1) return null;
+  const [tabAnchor, out, sanitize, input, width, box, column] = anchors[0];
+  const sanitizer = moduleFunctions.find(fn => fn.id.name === sanitize);
+  const sanitizerBody = source.slice(sanitizer.body.start, sanitizer.body.end);
+  if (!sanitizerBody.includes('.test(') || !sanitizerBody.includes('.replace(')) return null;
+
+  const ansiCandidates = cellAnsiCandidates(ast, dependencies, cache);
+  const inlineTokenizers = moduleFunctions.filter(fn => cellTokenizer(fn, source));
+  const inlineMerges = moduleFunctions.filter(fn => cellMerge(fn, source));
+  let dependency = null;
+  let cmr;
+  let Kf;
+  if (inlineTokenizers.length === 1 && inlineMerges.length === 1
+    && inlineTokenizers[0] !== inlineMerges[0]) {
+    cmr = inlineTokenizers[0].id.name;
+    Kf = inlineMerges[0].id.name;
+  } else if (inlineTokenizers.length === 0 && inlineMerges.length === 0 && ansiCandidates.length === 1) {
+    dependency = ansiCandidates[0];
+    cmr = 'clawgodAnsiTokens';
+    Kf = 'clawgodMergeStyles';
+  } else {
+    return null;
+  }
+
+  let shared = null;
+  if (factoryCall.type === 'CallExpression') {
+    shared = cellSharedModule(source, ast, factoryCall, dependencies, cache);
+    if (!shared) return null;
+  } else {
+    const callee = factoryCall.callee;
+    if (callee.type !== 'MemberExpression' || callee.computed || callee.property.type !== 'Identifier'
+      || callee.property.name !== 'CellSegmenter' || callee.object.type !== 'MemberExpression'
+      || callee.object.computed || callee.object.property.type !== 'Identifier'
+      || callee.object.property.name !== 'ant' || callee.object.object.type !== 'Identifier'
+      || callee.object.object.name !== 'Bun') return null;
+  }
+
+  let oscDeclaration = null;
+  if (!dependency) {
+    const declarations = [];
+    for (const node of ast.body) {
+      if (node.type !== 'VariableDeclaration') continue;
+      for (const item of node.declarations) {
+        if (item.init?.type === 'Literal' && typeof item.init.value === 'string'
+          && item.init.value.startsWith('\x1B]8;;')) declarations.push(source.slice(node.start, node.end));
+      }
+    }
+    if (declarations.length !== 1) return null;
+    oscDeclaration = declarations[0];
+  }
+
+  const names = {
+    Ns: ns.id.name, Dd: rowClass.id.name, Cx: setCell.id.name, xC: writeLine.fn.id.name,
+    cmr, Kf, Dc: sanitizer.id.name, bn, wo, Xf, jn, Rx: cells.Rx, xx: cells.xx,
+    hht, C8, MNr: style.tokenize, LNr: style.normalize, bGt,
+  };
+
+  let writeLineSource = CELL_WRITE_LINE_SOURCE;
+  if (overrides.writeLineSource !== undefined) {
+    writeLineSource = overrides.writeLineSource;
+  } else if (writeLine.clip) {
+    const derived = cellWriteLineSource(writeLine, names);
+    if (!derived) return null;
+    writeLineSource = derived;
+  }
+
+  const shape = [ns, rowClass, setCell, writeLine.fn, sanitizer].map(node => ({
+    header: source.slice(node.start, node.body.start + 1),
+    digest: createHash('sha256').update(source.slice(node.start, node.end)).digest('hex'),
+  }));
+
+  return {
+    shape,
+    names,
+    ...(dependency ? {
+      dependency: {
+        specifier: dependency.specifier,
+        digest: createHash('sha256').update(dependency.text).digest('hex'),
+        tokenizer: dependency.tokenizer,
+        normalizeStyles: dependency.normalizeStyles,
+      },
+    } : {}),
+    ...(shared ? { shared } : {}),
+    tabAnchor,
+    tabReplacement: cellTabReplacement(out, sanitize, input, width, box, column, names, Boolean(dependency)),
+    ...(oscDeclaration ? { oscDeclaration } : {}),
+    writeLineSource,
+  };
+}
+
+// 已知版本一旦有任一冻结声明仍逐字节匹配，却没能走通冻结档案，就说明模块被
+// 改动或损坏，而不是新版本；此时不得降级到结构 fallback。2.1.299 没有字节
+// 档案，改用渲染器自己的结构签名识别同一家族。依赖分块（ANSI/shared）跨版本
+// 结构稳定，不能拿它们判定家族，否则会误伤真正的新版本。
+function frozenCellFamily(source) {
+  const shapes = [CELL_SEGMENTER_SHAPE, ...CELL_PLATFORM_SHAPES.map(profile => profile.shape)];
+  for (const shape of shapes) {
+    for (const { header, digest } of shape) {
+      const start = source.indexOf(header);
+      if (start < 0 || source.indexOf(header, start + header.length) >= 0) continue;
+      const end = findDeclarationEnd(source, start + header.length - 1);
+      if (end >= 0 && createHash('sha256').update(source.slice(start, end + 1)).digest('hex') === digest) return true;
+    }
+  }
+  try {
+    const digest = structuralModule(source).digest;
+    if (CELL_STRUCTURAL_SHAPES.some(profile => profile.renderers.some(renderer => renderer.digest === digest))) {
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+/**
+ * Structural fallback for versions no frozen archive describes. Locates the real
+ * row-cell class and its declarations with acorn, then reuses the exact same
+ * byte-level span/digest rewrite as the frozen path. Returns null when any
+ * candidate is ambiguous, incomplete, or the rewritten module no longer parses.
+ */
+export function adaptCellRendererAst(source, dependencies = new Map(), overrides = {}) {
+  if (!source.includes(CELL_ROW_CELL_MARKER)) return null;
+  let profile;
+  try { profile = astCellProfile(source, dependencies, overrides); } catch { return null; }
+  if (!profile) return null;
+  let adapted;
+  try { adapted = adaptCellRendererShape(source, profile, dependencies); } catch { return null; }
+  if (adapted === null) return null;
+  try { cellAst.parse(adapted, { ecmaVersion: 'latest', sourceType: 'module' }); } catch { return null; }
+  if (!adapted.includes('ClawGod: public-Bun replacement')
+    || !adapted.includes('function writeCell(') || !adapted.includes('function paintCells(')
+    || adapted.includes(CELL_ROW_CELL_MARKER)) return null;
+  if (source.includes('Bun.ant.CellSegmenter') && adapted.includes('Bun.ant.CellSegmenter')) return null;
+  return adapted;
+}
+
 /**
  * Rewrites a frozen private-runtime renderer into the public-Bun one.
  * Returns null when the module matches no frozen platform shape, so the caller
@@ -7970,9 +8530,12 @@ export function adaptCellRenderer(source, shape, dependencies = new Map()) {
     const adapted = adaptCellRendererShape(source, profile, dependencies);
     if (adapted !== null) return adapted;
   }
-  if (!shape && source.includes('stylePool;charPool;native=')) {
+  if (!shape && source.includes(CELL_ROW_CELL_MARKER)) {
     const profile = structuralCellProfile(source, dependencies);
     if (profile) return adaptCellRendererShape(source, profile, dependencies);
+    let frozen = true;
+    try { frozen = frozenCellFamily(source); } catch {}
+    if (!frozen) return adaptCellRendererAst(source, dependencies);
   }
   return null;
 }
@@ -8051,18 +8614,42 @@ function installPublicCellRenderer(modulePaths) {
   if (targets.length > 1) {
     throw new Error(`多个分块都依赖私有 Bun.ant.CellSegmenter，形态无法确认；已拒绝安装（${targets.length} 个）。`);
   }
+  const discoverSharedProfiles = () => {
+    const cache = new Map();
+    return [...new Set(dependencies.values())].filter(source => source.includes(CELL_ROW_CELL_MARKER))
+      .map(source => {
+        const exact = structuralCellProfile(source, dependencies);
+        if (exact) return exact;
+        try {
+          if (frozenCellFamily(source)) return null;
+          return astCellProfile(source, dependencies, {}, cache);
+        } catch { return null; }
+      })
+      .filter(profile => profile?.shared && basename(profile.shared.specifier) === basename(targets[0].path));
+  };
+  const findRenderers = profile => modulePaths.map(path => ({ path, source: dependencies.get(basename(path)) }))
+    .filter(({ source }) => adaptCellRendererShape(source, profile, dependencies) !== null);
   let sharedProfile = CELL_PLATFORM_SHAPES.find(profile => profile.shared
     && basename(profile.shared.specifier) === basename(targets[0].path));
   if (!sharedProfile) {
-    const profiles = [...dependencies.values()].filter(source => source.includes('stylePool;charPool;native='))
-      .map(source => structuralCellProfile(source, dependencies)).filter(Boolean)
-      .filter(profile => basename(profile.shared.specifier) === basename(targets[0].path));
+    const profiles = discoverSharedProfiles();
     if (profiles.length === 1) sharedProfile = profiles[0];
   }
   if (sharedProfile) {
+    let renderer = findRenderers(sharedProfile);
+    if (renderer.length !== 1) {
+      // 冻结档案按分块名命中、但渲染器已漂移时，仍允许结构 fallback 接手；
+      // 已知版本的漂移由 frozenCellFamily 挡住。
+      const profiles = discoverSharedProfiles();
+      if (profiles.length === 1 && profiles[0] !== sharedProfile) {
+        const alternative = findRenderers(profiles[0]);
+        if (alternative.length === 1) {
+          sharedProfile = profiles[0];
+          renderer = alternative;
+        }
+      }
+    }
     const { shared } = sharedProfile;
-    const renderer = modulePaths.map(path => ({ path, source: dependencies.get(basename(path)) }))
-      .filter(({ source }) => adaptCellRendererShape(source, sharedProfile, dependencies) !== null);
     const text = dependencies.get(shared.text);
     if (renderer.length !== 1 || typeof text !== 'string'
       || createHash('sha256').update(text).digest('hex') !== shared.textDigest) {
