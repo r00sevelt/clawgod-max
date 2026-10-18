@@ -75,6 +75,12 @@ const expectedIds = [
 ];
 assert.deepEqual(manifest.map(entry => entry.id), expectedIds, 'selection fixtures must follow manifest order');
 
+const standardConfig = `{
+  "schemaVersion": 1,
+  "mode": "standard",
+  "enabled": []
+}
+`;
 const allConfig = `{
   "schemaVersion": 1,
   "mode": "all",
@@ -314,7 +320,7 @@ function cleanup(result) {
       ['enhancement-config.mjs', 'enhancement-manifest.json', 'enhancements.json'],
       'generated bootstrap must create only its config engine, manifest, and saved selection',
     );
-    assert.equal(readFileSync(join(clawgod, 'enhancements.json'), 'utf8'), allConfig);
+    assert.equal(readFileSync(join(clawgod, 'enhancements.json'), 'utf8'), standardConfig);
   } finally {
     rmSync(fixture.fixtureRoot, { recursive: true, force: true });
   }
@@ -426,7 +432,7 @@ function cleanup(result) {
   const result = runUnix([], { input: 'n\n', prefix: 'clawgod-selection-ordinary-' });
   try {
     assert.equal(result.run.status, 0, result.run.stderr);
-    assertOnlyConfig(result.fixture.home, allConfig);
+    assertOnlyConfig(result.fixture.home, standardConfig);
     assert.doesNotMatch(`${result.run.stdout}${result.run.stderr}`, /Choice:/, 'ordinary install must never prompt');
   } finally {
     cleanup(result);
@@ -437,7 +443,7 @@ function cleanup(result) {
   const result = runUnix(['--choose-enhancements'], { prefix: 'clawgod-selection-no-tty-' });
   try {
     assert.equal(result.run.status, 0, result.run.stderr);
-    assertOnlyConfig(result.fixture.home, allConfig);
+    assertOnlyConfig(result.fixture.home, standardConfig);
     const output = `${result.run.stdout}${result.run.stderr}`;
     assert.equal((output.match(/interactive enhancement selection unavailable/gi) || []).length, 1, 'explicit choose without TTY must warn exactly once');
     assert.doesNotMatch(output, /Choice:/, 'explicit choose without TTY must not prompt');
@@ -496,7 +502,7 @@ function cleanup(result) {
       env: selectionEnvironment(fixture),
     });
     assert.equal(run.status, 0, run.stderr);
-    assertOnlyConfig(fixture.home, allConfig);
+    assertOnlyConfig(fixture.home, standardConfig);
     assert.equal((`${run.stdout}${run.stderr}`.match(/interactive enhancement selection unavailable/gi) || []).length, 1, 'piped installer choose must warn exactly once');
     assert.doesNotMatch(`${run.stdout}${run.stderr}`, /Choice:/, 'piped installer must not prompt');
   } finally {
@@ -570,7 +576,7 @@ function runUnixTtyCase(label, lines, expected, {
       `${label}: no unexpected invalid-choice warnings`,
     );
     assert.equal(
-      countOccurrences(output, 'Interactive enhancement selection unavailable; using saved selection or all enhancements.'),
+      countOccurrences(output, 'Interactive enhancement selection unavailable; using the saved selection or the standard profile.'),
       expectedWarnings.filter(warning => warning.startsWith('Interactive enhancement selection unavailable;')).length,
       `${label}: no unexpected interaction warnings`,
     );
@@ -652,14 +658,15 @@ runUnixTtyCase('eof-confirm', [], allConfig, { keys: '\x04', expectedMenuCount: 
   });
   assert.ok(output.includes('>  1) [ ] chrome'), 'wrapped cursor frame must mark row 1 with >');
 }
-runUnixTtyCase('ci', ['ci-input-must-remain-unread'], allConfig, {
+runUnixTtyCase('ci', ['ci-input-must-remain-unread'], standardConfig, {
   env: { CI: '1' },
   expectedMenuCount: 0,
   expectedUnreadLine: 'ci-input-must-remain-unread',
-  expectedWarnings: ['Interactive enhancement selection unavailable; using saved selection or all enhancements.'],
+  expectedWarnings: ['Interactive enhancement selection unavailable; using the saved selection or the standard profile.'],
 });
-runUnixTtyCase('auto-enter', [], allConfig, { args: [], keys: '\r', expectedMenuCount: 0, expectedModeMenuCount: 1 });
-runUnixTtyCase('auto-all', [], allConfig, { args: [], keys: '1', expectedMenuCount: 0, expectedModeMenuCount: 1 });
+runUnixTtyCase('auto-enter', [], standardConfig, { args: [], keys: '\r', expectedMenuCount: 0, expectedModeMenuCount: 1 });
+runUnixTtyCase('auto-standard', [], standardConfig, { args: [], keys: '1', expectedMenuCount: 0, expectedModeMenuCount: 1 });
+runUnixTtyCase('auto-all', [], allConfig, { args: [], keys: '4', expectedMenuCount: 0, expectedModeMenuCount: 1 });
 runUnixTtyCase('auto-core', [], noneConfig, { args: [], keys: '2', expectedMenuCount: 0, expectedModeMenuCount: 1 });
 runUnixTtyCase('auto-invalid', [], noneConfig, {
   args: [],
@@ -668,7 +675,7 @@ runUnixTtyCase('auto-invalid', [], noneConfig, {
   expectedModeMenuCount: 2,
   expectedWarnings: ['Invalid enhancement choice: x'],
 });
-runUnixTtyCase('custom-escape-return', [], allConfig, {
+runUnixTtyCase('custom-escape-return', [], standardConfig, {
   args: [],
   keys: '3\x1b\r',
   expectedMenuCount: 1,
@@ -714,7 +721,7 @@ runUnixTtyCase('auto-custom', [], withoutFirstTwoConfig, {
   expectedMenuCount: 4,
   expectedModeMenuCount: 1,
 });
-runUnixTtyCase('auto-noninteractive-env', ['input-must-remain-unread'], allConfig, {
+runUnixTtyCase('auto-noninteractive-env', ['input-must-remain-unread'], standardConfig, {
   args: [],
   env: { CLAWGOD_NONINTERACTIVE: '1' },
   expectedMenuCount: 0,
@@ -726,7 +733,7 @@ runUnixTtyCase('auto-noninteractive-env', ['input-must-remain-unread'], allConfi
   const result = runUnix(['--choose-enhancements'], { env: { CI: '1' }, prefix: 'clawgod-selection-ci-' });
   try {
     assert.equal(result.run.status, 0, result.run.stderr);
-    assertOnlyConfig(result.fixture.home, allConfig);
+    assertOnlyConfig(result.fixture.home, standardConfig);
     assert.doesNotMatch(`${result.run.stdout}${result.run.stderr}`, /Choice:/, 'CI must not prompt');
   } finally {
     cleanup(result);
@@ -801,10 +808,11 @@ if ($env:CLAWGOD_TEST_KEYS) {
     function Write-EnhancementModeMenu {
         Write-Host ''
         Write-Host '  ClawGod Max 增强选择'
-        Write-Host ('   1) 全部 {0} 项增强（默认，回车即选）' -f $EnhancementIds.Count)
+        Write-Host ('   1) 标准 {0} 项增强（默认，回车即选；不含绕过类）' -f ($EnhancementIds.Count - $OptInEnhancementIds.Count))
         Write-Host '   2) 仅核心（不装任何增强）'
         Write-Host '   3) 自定义菜单（逐项勾选）'
-        Write-Host '  回车 全部增强 · Esc 退出'
+        Write-Host ('   4) 全部 {0} 项增强（含绕过类）' -f $EnhancementIds.Count)
+        Write-Host '  回车 标准增强 · Esc 退出'
     }
 }
 Initialize-EnhancementSelection
@@ -866,17 +874,19 @@ if (pwsh) {
   });
   assert.doesNotMatch(output, /Choice|interactive enhancement selection unavailable/i, 'PowerShell explicit CSV must win over choose');
 
-  runPowerShell(pwsh, 'ordinary', [], allConfig);
-  output = runPowerShell(pwsh, 'auto-enter', [], allConfig, { keySequence: ['Enter'] });
+  runPowerShell(pwsh, 'ordinary', [], standardConfig);
+  output = runPowerShell(pwsh, 'auto-enter', [], standardConfig, { keySequence: ['Enter'] });
   assert.doesNotMatch(output, /interactive enhancement selection unavailable/i, 'PowerShell auto prompt must not fall back');
   assert.equal(countOccurrences(output, 'ClawGod Max 增强选择'), 1, 'PowerShell auto prompt exact quick-menu count');
+  runPowerShell(pwsh, 'auto-standard', [], standardConfig, { keySequence: ['D1'] });
+  runPowerShell(pwsh, 'auto-all', [], allConfig, { keySequence: ['D4'] });
   runPowerShell(pwsh, 'auto-core', [], noneConfig, { keySequence: ['D2'] });
   runPowerShell(pwsh, 'auto-custom', [], withoutFirstTwoConfig, { keySequence: ['D3', 'Spacebar', 'DownArrow', 'Spacebar', 'Enter'] });
-  runPowerShell(pwsh, 'auto-noninteractive', [], allConfig, {
+  runPowerShell(pwsh, 'auto-noninteractive', [], standardConfig, {
     env: { CLAWGOD_NONINTERACTIVE: '1' },
     keySequence: [],
   });
-  runPowerShell(pwsh, 'custom-escape-return', [], allConfig, { keySequence: ['D3', 'Escape', 'Enter'] });
+  runPowerShell(pwsh, 'custom-escape-return', [], standardConfig, { keySequence: ['D3', 'Escape', 'Enter'] });
   runPowerShell(pwsh, 'saved', [], chromeBrandingConfig, {
     prepare(fixture) {
       const clawgod = join(fixture.home, '.clawgod');
@@ -885,7 +895,7 @@ if (pwsh) {
     },
   });
 
-  output = runPowerShell(pwsh, 'no-tty', ['-ChooseEnhancements'], allConfig);
+  output = runPowerShell(pwsh, 'no-tty', ['-ChooseEnhancements'], standardConfig);
   assert.equal((output.match(/interactive enhancement selection unavailable/gi) || []).length, 1, 'PowerShell choose without a console must warn exactly once');
   output = runPowerShell(pwsh, 'saved-no-tty', ['-ChooseEnhancements'], chromeBrandingConfig, {
     prepare(fixture) {
@@ -896,7 +906,7 @@ if (pwsh) {
   });
   assert.equal((output.match(/interactive enhancement selection unavailable/gi) || []).length, 1, 'PowerShell saved no-console fallback must warn exactly once');
 
-  output = runPowerShell(pwsh, 'ci', ['-ChooseEnhancements'], allConfig, { env: { CI: '1' } });
+  output = runPowerShell(pwsh, 'ci', ['-ChooseEnhancements'], standardConfig, { env: { CI: '1' } });
   assert.equal((output.match(/interactive enhancement selection unavailable/gi) || []).length, 1, 'PowerShell CI choose must warn exactly once');
 
   for (const [label, keySequence, expected, warnings] of [

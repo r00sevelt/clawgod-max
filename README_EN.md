@@ -87,26 +87,27 @@ ClawGod Max offers 21 optional enhancements, all enabled by default. The enhance
 | Patch | `chrome`, `computer-use`, `design-canvas`, `agents`, `planning`, `voice`, `auto-mode`, `unrestricted-tools`, `paste-images`, `privacy`, `branding`, `classifier-fail-open`, `cleanup-period`, `disable-collapse-read-search`, `enable-keybindings`, `file-read-limit`, `transcript-dialog-replay`, `unlock-ultracode` |
 | Plugin | `claude-hud`, `claude-mem`, `superpowers` |
 
-With no option and no interactive terminal (piped installs, CI, `claude update`), all 21 enhancements are enabled by default. The selection is persisted as strict JSON in `~/.clawgod/enhancements.json`:
+With no option and no interactive terminal (piped installs, CI, `claude update`), the **standard profile** is enabled by default: 20 of the 21 enhancements, excluding `unrestricted-tools` (account spoofing and safety/content bypasses, explicit opt-in only). The selection is persisted as strict JSON in `~/.clawgod/enhancements.json`:
 
 ```json
 {
   "schemaVersion": 1,
-  "mode": "all",
+  "mode": "standard",
   "enabled": []
 }
 ```
 
-`mode` `all` always enables every enhancement in the manifest (including future IDs); `mode` `custom` enables only the IDs listed in `enabled`.
+`mode` `standard` enables every non-opt-in enhancement; `mode` `all` enables every enhancement in the manifest (including `unrestricted-tools` and future IDs); `mode` `custom` enables only the IDs listed in `enabled`.
 
 Running the installer directly in a terminal asks automatically, no flags to remember:
 
 ```
   ClawGod Max enhancement selection
-   1) All 21 enhancements (default, Enter to select)
+   1) Standard 20 enhancements (default, Enter to select; excludes bypasses)
    2) Core only (no enhancements)
    3) Custom menu (toggle individual items)
-   Enter: all enhancements · Esc: cancel
+   4) All 21 enhancements (includes bypasses, explicit opt-in)
+   Enter: standard enhancements · Esc: cancel
 ```
 
 The custom menu is keyboard-driven: `↑`/`↓` move the cursor (wrapping at the ends), `Space` toggles the item, `Enter` confirms, `Esc` returns to the mode menu. Confirming with everything unchecked equals core-only. Pressing `Esc` at the top level cancels the install.
@@ -116,7 +117,9 @@ You can also choose explicitly or specify non-interactively:
 ```bash
 bash install.sh --choose-enhancements   # open the per-item custom menu directly
 bash install.sh --enhancements chrome,computer-use,claude-hud
-bash install.sh --enhancements none   # core only, no enhancements
+bash install.sh --enhancements standard   # standard profile (default, no bypasses)
+bash install.sh --enhancements all        # every enhancement (explicit bypass opt-in)
+bash install.sh --enhancements none       # core only, no enhancements
 ```
 
 Windows PowerShell equivalents:
@@ -124,6 +127,8 @@ Windows PowerShell equivalents:
 ```powershell
 .\install.ps1 -ChooseEnhancements
 .\install.ps1 -Enhancements chrome,computer-use,claude-hud
+.\install.ps1 -Enhancements standard
+.\install.ps1 -Enhancements all
 .\install.ps1 -Enhancements none
 ```
 

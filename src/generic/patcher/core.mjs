@@ -148,14 +148,6 @@ export function terminalReplyDelay(querier, reader, now) {
 
 const patches = [
   {
-    order: 0,
-    name: 'USER_TYPE → ant',
-    semanticId: 'user-type-ant',
-    pattern: /function ([\w$]+)\(\)\{return"external"\}/g,
-    replacer: (match, fn) => `function ${fn}(){return"ant"}`,
-    sentinel: 'return"external"',
-  },
-  {
     order: 1,
     name: 'Worker resolver for plain Bun cli.cjs (target shape)',
     pattern: /if\(([\w$]+)\(\)\)return\{cmd:process\.execPath,prefixArgs:\[\],target:process\.execPath\};let ([\w$]+)=process\.argv\[1\];if\(!\2\)return\{cmd:process\.execPath,prefixArgs:\[\],target:process\.execPath\};return\{cmd:process\.execPath,prefixArgs:\[\2\],target:\2\}/g,

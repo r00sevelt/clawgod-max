@@ -90,3 +90,11 @@
 - **测试**：`tests/patcher-compatibility-fallback.mjs` 新增 unparseable source 三用例（strict=1 / fallback=42 / dry-run+fallback=1），断言目标与 chunks 不变、无 `.bak`。
 - **验证**：`patcher-compatibility-fallback`、`patcher-semantic-failures`、`patcher-semantic-scanner`、`patcher-semantic` 全绿；`bun build.mjs` 重建 dist 且 `--check` 通过。Windows 全量 `tests/*.mjs` 的 18 项失败均为既有 POSIX/环境限制（0600 模式、/bin/bash、shell launcher、mkdtemp 引号、ENOTDIR、信号传播），与本改动无关；云端 CI 待跑。
 - **状态**：随本次提交推送；云端 Compat Daily 复核中（本地不再跑测试）。
+
+## 2026-10-19：补丁分级（standard / all，绕过类 opt-in）
+
+- **问题**：非交互安装默认 `mode:"all"`，21 项全开；`USER_TYPE → ant` 是 core 语义补丁，即使 `--enhancements none` 也会把账号伪装成 ant；`unrestricted-tools` 自带的安全/内容绕过（remove-cyber-risk、remove-url-restriction、remove-cautious-actions、remove-not-logged-in、attachment/message filter）随全开默认生效。
+- **实现**：新增 `mode:"standard"` 作为默认档，21 项中排除显式 opt-in `unrestricted-tools`（20 项）；`all` 仍是显式全开；`custom` 不变。`USER_TYPE → ant` 从 core 移入 `unrestricted-tools`，与其余绕过同档。`--enhancements standard|all|none` 与 PowerShell `-Enhancements` 同步支持；交互菜单默认标准档，新增选项 4 为全部。
+- **兼容**：已保存 `mode:"all"` 的旧配置继续全开；缺失配置的新装/更新走 standard；`custom` 选择不受影响。
+- **测试**：增强配置引擎、安装器选择、E2E 期望、patcher 注册表断言同步更新；本地不跑测试，全部交云端 CI。
+- **状态**：本地改动，待推送。

@@ -657,7 +657,7 @@ jobs:
           $initialWarnings = if ($initialSummary.Groups[3].Success) { ", $($initialSummary.Groups[3].Value) warnings" } else { '' }
           Write-Host "patch summary windows initial: $($initialSummary.Groups[1].Value) applied, $($initialSummary.Groups[2].Value) skipped, 0 failed$initialWarnings"
           Assert-PluginSummary 'initial' $initialOutput
-          Assert-EnhancementConfig 'initial' 'all' 0
+          Assert-EnhancementConfig 'initial' 'standard' 0
           if (Test-Path (Join-Path $env:USERPROFILE '.clawgod\patch-fallback.json')) { throw 'clean initial install must not record patch fallback state' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.clawgod\self-update.cjs'))) { throw 'clean initial install must provide self-update.cjs' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.clawgod\patch-fallback.cjs'))) { throw 'clean initial install must provide patch-fallback.cjs' }
@@ -693,7 +693,7 @@ jobs:
           $noUpgradeWarnings = if ($noUpgradeSummary.Groups[3].Success) { ", $($noUpgradeSummary.Groups[3].Value) warnings" } else { '' }
           Write-Host "patch summary windows no-upgrade: $($noUpgradeSummary.Groups[1].Value) applied, $($noUpgradeSummary.Groups[2].Value) skipped, 0 failed$noUpgradeWarnings"
           Assert-PluginSummary 'no-upgrade' $noUpgradeOutput
-          Assert-EnhancementConfig 'no-upgrade' 'all' 0
+          Assert-EnhancementConfig 'no-upgrade' 'standard' 0
           $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
           if ($null -ne $settings.disableWorkflows) { throw '-LeanOff did not remove lean settings' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.clawgod\.lean-disabled'))) { throw '-LeanOff did not create its state marker' }

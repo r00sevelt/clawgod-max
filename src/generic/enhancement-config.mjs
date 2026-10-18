@@ -76,6 +76,16 @@ function manifestIds(manifest) {
   return ids;
 }
 
+// Enhancements that can bypass safety/content controls are explicit opt-ins:
+// available through mode "all" or a custom selection, never the default
+// "standard" profile.
+export const OPT_IN_ENHANCEMENT_IDS = Object.freeze(['unrestricted-tools']);
+
+export function standardEnhancementIds(manifest) {
+  const optIn = new Set(OPT_IN_ENHANCEMENT_IDS);
+  return manifestIds(manifest).filter(id => !optIn.has(id));
+}
+
 export function loadEnhancementManifest(source, { filename = ENHANCEMENT_CONFIG_FILENAME } = {}) {
   assertSafeFilename(filename, 'manifest');
   const text = decodeSource(source, 'enhancement manifest');
@@ -122,12 +132,12 @@ export function validateStoredEnhancementConfig(value, manifest) {
   if (value.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement config schemaVersion: ${String(value.schemaVersion)}`);
   }
-  if (value.mode !== 'all' && value.mode !== 'custom') {
+  if (value.mode !== 'all' && value.mode !== 'standard' && value.mode !== 'custom') {
     throw new Error(`Invalid enhancement config mode: ${String(value.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(value.enabled, manifest);
-  if (value.mode === 'all' && enabled.length !== 0) {
-    throw new Error('Enhancement config mode all requires an empty enabled array');
+  if ((value.mode === 'all' || value.mode === 'standard') && enabled.length !== 0) {
+    throw new Error(`Enhancement config mode ${value.mode} requires an empty enabled array`);
   }
   if (value.mode === 'custom' && enabled.length === manifest.length) {
     throw new Error('A complete enhancement selection must use mode all');
@@ -164,12 +174,21 @@ export function selectionToStoredEnhancementConfig(selection, manifest) {
     && selection.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement selection schemaVersion: ${String(selection.schemaVersion)}`);
   }
-  if (selection.mode !== 'all' && selection.mode !== 'custom') {
+  if (selection.mode !== 'all' && selection.mode !== 'standard' && selection.mode !== 'custom') {
     throw new Error(`Invalid enhancement selection mode: ${String(selection.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(selection.enabled, manifest);
   if (selection.mode === 'all' && enabled.length !== 0 && enabled.length !== manifest.length) {
     throw new Error('Enhancement selection mode all must contain none or every manifest ID');
+  }
+  if (selection.mode === 'standard') {
+    const standard = standardEnhancementIds(manifest);
+    const matchesStandard = enabled.length === standard.length
+      && enabled.every((id, index) => id === standard[index]);
+    if (enabled.length !== 0 && !matchesStandard) {
+      throw new Error('Enhancement selection mode standard must contain none or every standard ID');
+    }
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   if (selection.mode === 'all' || enabled.length === manifest.length) {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
@@ -182,6 +201,12 @@ export function parseExplicitEnhancementSelection(explicit, manifest) {
   if (explicit.length === 0) throw new Error('Explicit enhancement selection must not be empty');
   if (explicit === 'none') {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'custom', enabled: [] };
+  }
+  if (explicit === 'all') {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
+  }
+  if (explicit === 'standard') {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   const requested = explicit.split(',');
   if (requested.some(id => id.length === 0)) throw new Error('Invalid explicit CSV: empty enhancement ID');
@@ -200,11 +225,15 @@ export function resolveEnhancementSelection(input = {}, manifest) {
   } else if (Object.hasOwn(input, 'stored') && input.stored !== undefined && input.stored !== null) {
     config = validateStoredEnhancementConfig(input.stored, manifest);
   } else {
-    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
+    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   return {
     mode: config.mode,
-    enabled: config.mode === 'all' ? manifestIds(manifest) : [...config.enabled],
+    enabled: config.mode === 'all'
+      ? manifestIds(manifest)
+      : config.mode === 'standard'
+        ? standardEnhancementIds(manifest)
+        : [...config.enabled],
   };
 }
 

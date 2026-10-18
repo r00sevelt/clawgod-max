@@ -71,6 +71,12 @@ CLAWGOD_ENHANCEMENT_IDS=(
   superpowers
 )
 
+# Safety/content bypass enhancements are explicit opt-ins; the default
+# standard profile is every ID above except these.
+CLAWGOD_OPT_IN_ENHANCEMENT_IDS=(
+  unrestricted-tools
+)
+
 CLAWGOD_ENHANCEMENT_LABELS=(
   'Chrome'
   'Computer Use'
@@ -296,24 +302,25 @@ choose_enhancements() {
 
 choose_enhancement_mode() {
   local count=${#CLAWGOD_ENHANCEMENT_IDS[@]}
+  local standard_count=$((count - ${#CLAWGOD_OPT_IN_ENHANCEMENT_IDS[@]}))
   CLAWGOD_MENU_RENDERED_LINES=0
   while true; do
     if [ "$CLAWGOD_MENU_RENDERED_LINES" -gt 0 ]; then
       printf '\033[%dA' "$CLAWGOD_MENU_RENDERED_LINES" > /dev/tty
     fi
     printf '\n  ClawGod Max 增强选择\n' > /dev/tty
-    printf '   1) 全部 %d 项增强（默认，回车即选）\n' "$count" > /dev/tty
+    printf '   1) 标准 %d 项增强（默认，回车即选；不含绕过类）\n' "$standard_count" > /dev/tty
     printf '   2) 仅核心（不装任何增强）\n' > /dev/tty
     printf '   3) 自定义菜单（逐项勾选）\n' > /dev/tty
-    printf '  回车 全部增强 · Esc 退出\n' > /dev/tty
+    printf '   4) 全部 %d 项增强（含绕过类，显式选择）\n' "$count" > /dev/tty
+    printf '  回车 标准增强 · Esc 退出\n' > /dev/tty
     printf '\033[J' > /dev/tty
-    CLAWGOD_MENU_RENDERED_LINES=5
+    CLAWGOD_MENU_RENDERED_LINES=6
 
     clawgod_menu_read_key
     case "$CLAWGOD_MENU_KEY" in
       CHAR:1|ENTER|EOF)
-        local IFS=,
-        ENHANCEMENT_CHOICE="${CLAWGOD_ENHANCEMENT_IDS[*]}"
+        ENHANCEMENT_CHOICE=standard
         return 0
         ;;
       CHAR:2) ENHANCEMENT_CHOICE=none; return 0 ;;
@@ -322,6 +329,11 @@ choose_enhancement_mode() {
           return 0
         fi
         CLAWGOD_MENU_RENDERED_LINES=0
+        ;;
+      CHAR:4)
+        local IFS=,
+        ENHANCEMENT_CHOICE="${CLAWGOD_ENHANCEMENT_IDS[*]}"
+        return 0
         ;;
       ESC) clawgod_menu_cancel_exit ;;
       *) enhancement_warn "Invalid enhancement choice: ${CLAWGOD_MENU_KEY#CHAR:}" ;;
@@ -366,7 +378,7 @@ configure_enhancement_selection() {
       fi
       clawgod_menu_cancel_exit
     fi
-    enhancement_warn 'Interactive enhancement selection unavailable; using saved selection or all enhancements.'
+    enhancement_warn 'Interactive enhancement selection unavailable; using the saved selection or the standard profile.'
     persist_enhancement_selection '__CLAWGOD_SAVED__'
     return
   fi

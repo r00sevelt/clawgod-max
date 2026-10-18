@@ -31,7 +31,9 @@ const ENHANCEMENT_IDS = Object.freeze(JSON.parse(
   readFileSync(new URL('../src/generic/enhancements.json', import.meta.url), 'utf8'),
 ).map(({ id }) => id));
 const PLUGIN_ENHANCEMENT_IDS = Object.freeze(['claude-hud', 'claude-mem', 'superpowers']);
-// '' = default all-enabled, 'none' = core-only, otherwise a CSV subset.
+const OPT_IN_ENHANCEMENT_IDS = new Set(['unrestricted-tools']);
+const STANDARD_ENHANCEMENT_IDS = Object.freeze(ENHANCEMENT_IDS.filter(id => !OPT_IN_ENHANCEMENT_IDS.has(id)));
+// '' = default standard profile, 'none' = core-only, otherwise a CSV subset.
 const e2eEnhancements = process.env.CLAWGOD_E2E_ENHANCEMENTS ?? '';
 
 function requestedEnhancementIds() {
@@ -45,12 +47,12 @@ function pluginSummaryExpectation() {
 }
 
 function enhancementConfigExpectation() {
-  if (e2eEnhancements === '') return { mode: 'all', enabled: [] };
+  if (e2eEnhancements === '') return { mode: 'standard', enabled: [] };
   return { mode: 'custom', enabled: requestedEnhancementIds() };
 }
 
 function enhancementSummaryExpectation() {
-  return { enabled: e2eEnhancements === '' ? ENHANCEMENT_IDS.length : requestedEnhancementIds().length };
+  return { enabled: e2eEnhancements === '' ? STANDARD_ENHANCEMENT_IDS.length : requestedEnhancementIds().length };
 }
 
 function createIsolatedRuntime(tempHome, bunExecutable = process.execPath) {

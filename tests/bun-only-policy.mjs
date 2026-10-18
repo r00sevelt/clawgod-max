@@ -525,8 +525,8 @@ const enhancementIds = [
   'claude-hud', 'claude-mem', 'superpowers',
 ];
 const enhancementSemanticMarkers = {
-  'README.md': ['默认启用全部', 'claude update', '不会删除'],
-  'README_EN.md': ['all 21 enhancements are enabled by default', 'claude update', 'never deletes'],
+  'README.md': ['默认启用 **standard 档**', 'claude update', '不会删除'],
+  'README_EN.md': ['standard profile** is enabled by default', 'claude update', 'never deletes'],
   'README_JP.md': ['デフォルトで 21', 'claude update', '削除しません'],
 };
 for (const path of ['README.md', 'README_EN.md', 'README_JP.md']) {

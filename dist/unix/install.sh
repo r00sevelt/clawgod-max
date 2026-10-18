@@ -86,6 +86,12 @@ CLAWGOD_ENHANCEMENT_IDS=(
   superpowers
 )
 
+# Safety/content bypass enhancements are explicit opt-ins; the default
+# standard profile is every ID above except these.
+CLAWGOD_OPT_IN_ENHANCEMENT_IDS=(
+  unrestricted-tools
+)
+
 CLAWGOD_ENHANCEMENT_LABELS=(
   'Chrome'
   'Computer Use'
@@ -311,24 +317,25 @@ choose_enhancements() {
 
 choose_enhancement_mode() {
   local count=${#CLAWGOD_ENHANCEMENT_IDS[@]}
+  local standard_count=$((count - ${#CLAWGOD_OPT_IN_ENHANCEMENT_IDS[@]}))
   CLAWGOD_MENU_RENDERED_LINES=0
   while true; do
     if [ "$CLAWGOD_MENU_RENDERED_LINES" -gt 0 ]; then
       printf '\033[%dA' "$CLAWGOD_MENU_RENDERED_LINES" > /dev/tty
     fi
     printf '\n  ClawGod Max 增强选择\n' > /dev/tty
-    printf '   1) 全部 %d 项增强（默认，回车即选）\n' "$count" > /dev/tty
+    printf '   1) 标准 %d 项增强（默认，回车即选；不含绕过类）\n' "$standard_count" > /dev/tty
     printf '   2) 仅核心（不装任何增强）\n' > /dev/tty
     printf '   3) 自定义菜单（逐项勾选）\n' > /dev/tty
-    printf '  回车 全部增强 · Esc 退出\n' > /dev/tty
+    printf '   4) 全部 %d 项增强（含绕过类，显式选择）\n' "$count" > /dev/tty
+    printf '  回车 标准增强 · Esc 退出\n' > /dev/tty
     printf '\033[J' > /dev/tty
-    CLAWGOD_MENU_RENDERED_LINES=5
+    CLAWGOD_MENU_RENDERED_LINES=6
 
     clawgod_menu_read_key
     case "$CLAWGOD_MENU_KEY" in
       CHAR:1|ENTER|EOF)
-        local IFS=,
-        ENHANCEMENT_CHOICE="${CLAWGOD_ENHANCEMENT_IDS[*]}"
+        ENHANCEMENT_CHOICE=standard
         return 0
         ;;
       CHAR:2) ENHANCEMENT_CHOICE=none; return 0 ;;
@@ -337,6 +344,11 @@ choose_enhancement_mode() {
           return 0
         fi
         CLAWGOD_MENU_RENDERED_LINES=0
+        ;;
+      CHAR:4)
+        local IFS=,
+        ENHANCEMENT_CHOICE="${CLAWGOD_ENHANCEMENT_IDS[*]}"
+        return 0
         ;;
       ESC) clawgod_menu_cancel_exit ;;
       *) enhancement_warn "Invalid enhancement choice: ${CLAWGOD_MENU_KEY#CHAR:}" ;;
@@ -381,7 +393,7 @@ configure_enhancement_selection() {
       fi
       clawgod_menu_cancel_exit
     fi
-    enhancement_warn 'Interactive enhancement selection unavailable; using saved selection or all enhancements.'
+    enhancement_warn 'Interactive enhancement selection unavailable; using the saved selection or the standard profile.'
     persist_enhancement_selection '__CLAWGOD_SAVED__'
     return
   fi
@@ -1376,6 +1388,16 @@ function manifestIds(manifest) {
   return ids;
 }
 
+// Enhancements that can bypass safety/content controls are explicit opt-ins:
+// available through mode "all" or a custom selection, never the default
+// "standard" profile.
+export const OPT_IN_ENHANCEMENT_IDS = Object.freeze(['unrestricted-tools']);
+
+export function standardEnhancementIds(manifest) {
+  const optIn = new Set(OPT_IN_ENHANCEMENT_IDS);
+  return manifestIds(manifest).filter(id => !optIn.has(id));
+}
+
 export function loadEnhancementManifest(source, { filename = ENHANCEMENT_CONFIG_FILENAME } = {}) {
   assertSafeFilename(filename, 'manifest');
   const text = decodeSource(source, 'enhancement manifest');
@@ -1422,12 +1444,12 @@ export function validateStoredEnhancementConfig(value, manifest) {
   if (value.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement config schemaVersion: ${String(value.schemaVersion)}`);
   }
-  if (value.mode !== 'all' && value.mode !== 'custom') {
+  if (value.mode !== 'all' && value.mode !== 'standard' && value.mode !== 'custom') {
     throw new Error(`Invalid enhancement config mode: ${String(value.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(value.enabled, manifest);
-  if (value.mode === 'all' && enabled.length !== 0) {
-    throw new Error('Enhancement config mode all requires an empty enabled array');
+  if ((value.mode === 'all' || value.mode === 'standard') && enabled.length !== 0) {
+    throw new Error(`Enhancement config mode ${value.mode} requires an empty enabled array`);
   }
   if (value.mode === 'custom' && enabled.length === manifest.length) {
     throw new Error('A complete enhancement selection must use mode all');
@@ -1464,12 +1486,21 @@ export function selectionToStoredEnhancementConfig(selection, manifest) {
     && selection.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement selection schemaVersion: ${String(selection.schemaVersion)}`);
   }
-  if (selection.mode !== 'all' && selection.mode !== 'custom') {
+  if (selection.mode !== 'all' && selection.mode !== 'standard' && selection.mode !== 'custom') {
     throw new Error(`Invalid enhancement selection mode: ${String(selection.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(selection.enabled, manifest);
   if (selection.mode === 'all' && enabled.length !== 0 && enabled.length !== manifest.length) {
     throw new Error('Enhancement selection mode all must contain none or every manifest ID');
+  }
+  if (selection.mode === 'standard') {
+    const standard = standardEnhancementIds(manifest);
+    const matchesStandard = enabled.length === standard.length
+      && enabled.every((id, index) => id === standard[index]);
+    if (enabled.length !== 0 && !matchesStandard) {
+      throw new Error('Enhancement selection mode standard must contain none or every standard ID');
+    }
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   if (selection.mode === 'all' || enabled.length === manifest.length) {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
@@ -1482,6 +1513,12 @@ export function parseExplicitEnhancementSelection(explicit, manifest) {
   if (explicit.length === 0) throw new Error('Explicit enhancement selection must not be empty');
   if (explicit === 'none') {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'custom', enabled: [] };
+  }
+  if (explicit === 'all') {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
+  }
+  if (explicit === 'standard') {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   const requested = explicit.split(',');
   if (requested.some(id => id.length === 0)) throw new Error('Invalid explicit CSV: empty enhancement ID');
@@ -1500,11 +1537,15 @@ export function resolveEnhancementSelection(input = {}, manifest) {
   } else if (Object.hasOwn(input, 'stored') && input.stored !== undefined && input.stored !== null) {
     config = validateStoredEnhancementConfig(input.stored, manifest);
   } else {
-    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'all', enabled: [] };
+    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: 'standard', enabled: [] };
   }
   return {
     mode: config.mode,
-    enabled: config.mode === 'all' ? manifestIds(manifest) : [...config.enabled],
+    enabled: config.mode === 'all'
+      ? manifestIds(manifest)
+      : config.mode === 'standard'
+        ? standardEnhancementIds(manifest)
+        : [...config.enabled],
   };
 }
 
@@ -21918,6 +21959,11 @@ function manifestIds(manifest) {
   }
   return ids;
 }
+var OPT_IN_ENHANCEMENT_IDS = Object.freeze(["unrestricted-tools"]);
+function standardEnhancementIds(manifest) {
+  const optIn = new Set(OPT_IN_ENHANCEMENT_IDS);
+  return manifestIds(manifest).filter((id) => !optIn.has(id));
+}
 function loadEnhancementManifest(source, { filename = ENHANCEMENT_CONFIG_FILENAME } = {}) {
   assertSafeFilename(filename, "manifest");
   const text = decodeSource(source, "enhancement manifest");
@@ -21968,12 +22014,12 @@ function validateStoredEnhancementConfig(value, manifest) {
   if (value.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement config schemaVersion: ${String(value.schemaVersion)}`);
   }
-  if (value.mode !== "all" && value.mode !== "custom") {
+  if (value.mode !== "all" && value.mode !== "standard" && value.mode !== "custom") {
     throw new Error(`Invalid enhancement config mode: ${String(value.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(value.enabled, manifest);
-  if (value.mode === "all" && enabled.length !== 0) {
-    throw new Error("Enhancement config mode all requires an empty enabled array");
+  if ((value.mode === "all" || value.mode === "standard") && enabled.length !== 0) {
+    throw new Error(`Enhancement config mode ${value.mode} requires an empty enabled array`);
   }
   if (value.mode === "custom" && enabled.length === manifest.length) {
     throw new Error("A complete enhancement selection must use mode all");
@@ -22006,12 +22052,20 @@ function selectionToStoredEnhancementConfig(selection, manifest) {
   if (Object.hasOwn(selection, "schemaVersion") && selection.schemaVersion !== ENHANCEMENT_CONFIG_SCHEMA_VERSION) {
     throw new Error(`Unsupported enhancement selection schemaVersion: ${String(selection.schemaVersion)}`);
   }
-  if (selection.mode !== "all" && selection.mode !== "custom") {
+  if (selection.mode !== "all" && selection.mode !== "standard" && selection.mode !== "custom") {
     throw new Error(`Invalid enhancement selection mode: ${String(selection.mode)}`);
   }
   const enabled = normalizeEnhancementSelection(selection.enabled, manifest);
   if (selection.mode === "all" && enabled.length !== 0 && enabled.length !== manifest.length) {
     throw new Error("Enhancement selection mode all must contain none or every manifest ID");
+  }
+  if (selection.mode === "standard") {
+    const standard = standardEnhancementIds(manifest);
+    const matchesStandard = enabled.length === standard.length && enabled.every((id, index) => id === standard[index]);
+    if (enabled.length !== 0 && !matchesStandard) {
+      throw new Error("Enhancement selection mode standard must contain none or every standard ID");
+    }
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "standard", enabled: [] };
   }
   if (selection.mode === "all" || enabled.length === manifest.length) {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "all", enabled: [] };
@@ -22025,6 +22079,12 @@ function parseExplicitEnhancementSelection(explicit, manifest) {
     throw new Error("Explicit enhancement selection must not be empty");
   if (explicit === "none") {
     return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "custom", enabled: [] };
+  }
+  if (explicit === "all") {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "all", enabled: [] };
+  }
+  if (explicit === "standard") {
+    return { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "standard", enabled: [] };
   }
   const requested = explicit.split(",");
   if (requested.some((id) => id.length === 0))
@@ -22044,11 +22104,11 @@ function resolveEnhancementSelection(input = {}, manifest) {
   } else if (Object.hasOwn(input, "stored") && input.stored !== undefined && input.stored !== null) {
     config = validateStoredEnhancementConfig(input.stored, manifest);
   } else {
-    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "all", enabled: [] };
+    config = { schemaVersion: ENHANCEMENT_CONFIG_SCHEMA_VERSION, mode: "standard", enabled: [] };
   }
   return {
     mode: config.mode,
-    enabled: config.mode === "all" ? manifestIds(manifest) : [...config.enabled]
+    enabled: config.mode === "all" ? manifestIds(manifest) : config.mode === "standard" ? standardEnhancementIds(manifest) : [...config.enabled]
   };
 }
 function enhancementConfigPath(homeDir, { filename = ENHANCEMENT_CONFIG_FILENAME } = {}) {
@@ -23067,14 +23127,6 @@ function terminalReplyDelay(querier, reader, now) {
   return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
 }
 var patches = [
-  {
-    order: 0,
-    name: "USER_TYPE \u2192 ant",
-    semanticId: "user-type-ant",
-    pattern: /function ([\w$]+)\(\)\{return"external"\}/g,
-    replacer: (match, fn) => `function ${fn}(){return"ant"}`,
-    sentinel: 'return"external"'
-  },
   {
     order: 1,
     name: "Worker resolver for plain Bun cli.cjs (target shape)",
@@ -24597,6 +24649,14 @@ var privacyRegistry = Object.freeze({
 
 // src/generic/patcher/enhancements/unrestricted-tools.mjs
 var patches10 = [
+  {
+    order: 0,
+    name: "USER_TYPE \u2192 ant",
+    semanticId: "user-type-ant",
+    pattern: /function ([\w$]+)\(\)\{return"external"\}/g,
+    replacer: (match, fn) => `function ${fn}(){return"ant"}`,
+    sentinel: 'return"external"'
+  },
   {
     order: 46,
     name: "Restore Glob/Grep tools (un-inline EMBEDDED_SEARCH_TOOLS)",

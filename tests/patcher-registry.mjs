@@ -262,7 +262,6 @@ assert.deepEqual(
 );
 
 const expectedCore = [
-  'USER_TYPE → ant',
   'Worker resolver for plain Bun cli.cjs (target shape)',
   'Worker resolver for plain Bun cli.cjs (legacy shape)',
   'GrowthBook env overrides',
@@ -279,7 +278,13 @@ const core = patchRegistries.find(registry => registry.id === 'core');
 assert.deepEqual(
   [...core.patches, ...core.customPatches].map(descriptor => descriptor.name),
   expectedCore,
-  'core must own identity, worker, GrowthBook, shell, and context patches',
+  'core must own worker, GrowthBook, shell, and context patches',
+);
+const unrestrictedTools = patchRegistries.find(registry => registry.id === 'unrestricted-tools');
+assert.deepEqual(
+  unrestrictedTools.patches.filter(descriptor => descriptor.name === 'USER_TYPE → ant').map(descriptor => descriptor.name),
+  ['USER_TYPE → ant'],
+  'account spoofing must move into the explicit unrestricted-tools opt-in',
 );
 assert.deepEqual(
   inspectPatcherSource('/* Version: 2.1.226 */\nsource'),

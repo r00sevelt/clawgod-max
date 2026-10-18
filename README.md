@@ -87,26 +87,27 @@ ClawGod Max 提供 21 项可选增强，默认启用全部。增强 ID 固定且
 | 补丁 | `chrome`、`computer-use`、`design-canvas`、`agents`、`planning`、`voice`、`auto-mode`、`unrestricted-tools`、`paste-images`、`privacy`、`branding`、`classifier-fail-open`、`cleanup-period`、`disable-collapse-read-search`、`enable-keybindings`、`file-read-limit`、`transcript-dialog-replay`、`unlock-ultracode` |
 | 插件 | `claude-hud`、`claude-mem`、`superpowers` |
 
-非交互环境（管道安装、CI、`claude update`）不传任何选项时，默认启用全部 21 项增强。选择会以严格 JSON 形式保存到 `~/.clawgod/enhancements.json`：
+非交互环境（管道安装、CI、`claude update`）不传任何选项时，默认启用 **standard 档**：21 项中除 `unrestricted-tools`（账号伪装与安全/内容绕过，显式 opt-in）外的 20 项。选择会以严格 JSON 形式保存到 `~/.clawgod/enhancements.json`：
 
 ```json
 {
   "schemaVersion": 1,
-  "mode": "all",
+  "mode": "standard",
   "enabled": []
 }
 ```
 
-`mode` 为 `all` 时始终启用清单中的全部增强（含未来新增的 ID）；`mode` 为 `custom` 时只启用 `enabled` 列表中的 ID。
+`mode` 为 `standard` 时启用全部非 opt-in 增强；`mode` 为 `all` 时启用清单中的全部增强（含 `unrestricted-tools` 与未来新增的 ID）；`mode` 为 `custom` 时只启用 `enabled` 列表中的 ID。
 
 在终端里直接运行安装器时会自动询问，无需记参数：
 
 ```
   ClawGod Max 增强选择
-   1) 全部 21 项增强（默认，回车即选）
+   1) 标准 20 项增强（默认，回车即选；不含绕过类）
    2) 仅核心（不装任何增强）
    3) 自定义菜单（逐项勾选）
-   回车 全部增强 · Esc 退出
+   4) 全部 21 项增强（含绕过类，显式选择）
+   回车 标准增强 · Esc 退出
 ```
 
 自定义菜单用键盘逐项勾选：`↑`/`↓` 移动光标（首尾循环）、`空格` 切换勾选、`回车` 确认、`Esc` 返回上级菜单。全部取消后确认等同"仅核心"。顶层按 `Esc` 取消安装。
@@ -116,7 +117,9 @@ ClawGod Max 提供 21 项可选增强，默认启用全部。增强 ID 固定且
 ```bash
 bash install.sh --choose-enhancements   # 直接打开逐项自定义菜单
 bash install.sh --enhancements chrome,computer-use,claude-hud
-bash install.sh --enhancements none   # 仅核心，不启用任何增强
+bash install.sh --enhancements standard   # 标准档（默认，不含绕过类）
+bash install.sh --enhancements all        # 全部增强（显式开启绕过类）
+bash install.sh --enhancements none       # 仅核心，不启用任何增强
 ```
 
 Windows PowerShell 对应参数：
@@ -124,6 +127,8 @@ Windows PowerShell 对应参数：
 ```powershell
 .\install.ps1 -ChooseEnhancements
 .\install.ps1 -Enhancements chrome,computer-use,claude-hud
+.\install.ps1 -Enhancements standard
+.\install.ps1 -Enhancements all
 .\install.ps1 -Enhancements none
 ```
 

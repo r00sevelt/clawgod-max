@@ -35,6 +35,7 @@ import {
   resolveEnhancementSelection,
   selectionToStoredEnhancementConfig,
   serializeEnhancementConfig,
+  standardEnhancementIds,
   validateStoredEnhancementConfig,
   writeEnhancementConfig,
 } from '../src/generic/enhancement-config.mjs';
@@ -85,8 +86,11 @@ const EXPECTED_MANIFEST = [
   { id: 'claude-mem', kind: 'plugin' },
   { id: 'superpowers', kind: 'plugin' },
 ];
+const STANDARD_IDS = EXPECTED_IDS.filter(id => id !== 'unrestricted-tools');
+const CONFIG_STANDARD = { schemaVersion: 1, mode: 'standard', enabled: [] };
 const CONFIG_ALL = { schemaVersion: 1, mode: 'all', enabled: [] };
 const CONFIG_CUSTOM = { schemaVersion: 1, mode: 'custom', enabled: ['chrome', 'branding'] };
+const STANDARD_BYTES = `${JSON.stringify(CONFIG_STANDARD, null, 2)}\n`;
 const ALL_BYTES = `${JSON.stringify(CONFIG_ALL, null, 2)}\n`;
 const CUSTOM_BYTES = `${JSON.stringify(CONFIG_CUSTOM, null, 2)}\n`;
 const REAL_HOME = realpathSync(homedir());
@@ -199,7 +203,8 @@ for (const unsafeFilename of ['', '.', '..', '../enhancements.json', 'sub/enhanc
 
 const futureManifest = manifestFrom([...EXPECTED_MANIFEST, { id: 'future-tool', kind: 'plugin' }]);
 const cases = [
-  ['missing defaults to all', {}, { mode: 'all', enabled: EXPECTED_IDS }],
+  ['missing defaults to standard', {}, { mode: 'standard', enabled: STANDARD_IDS }],
+  ['saved standard includes future IDs', { stored: { schemaVersion: 1, mode: 'standard', enabled: [] }, useManifest: futureManifest }, { mode: 'standard', enabled: [...STANDARD_IDS, 'future-tool'] }],
   ['saved all includes future IDs', { stored: { schemaVersion: 1, mode: 'all', enabled: [] }, useManifest: futureManifest }, { mode: 'all', enabled: [...EXPECTED_IDS, 'future-tool'] }],
   ['custom keeps only saved order', { stored: { schemaVersion: 1, mode: 'custom', enabled: ['branding', 'chrome'] } }, { mode: 'custom', enabled: ['chrome', 'branding'] }],
   ['explicit overrides saved', { explicit: 'computer-use,chrome', stored: { schemaVersion: 1, mode: 'custom', enabled: ['branding'] } }, { mode: 'custom', enabled: ['chrome', 'computer-use'] }],
@@ -220,6 +225,17 @@ assert.deepEqual(
   CONFIG_ALL,
   'an explicit complete set must persist as mode all with an empty enabled array',
 );
+assert.deepEqual(
+  parseExplicitEnhancementSelection('all', manifest),
+  CONFIG_ALL,
+  'an explicit all keyword must persist as mode all with an empty enabled array',
+);
+assert.deepEqual(
+  parseExplicitEnhancementSelection('standard', manifest),
+  CONFIG_STANDARD,
+  'an explicit standard profile must persist as mode standard with an empty enabled array',
+);
+assert.deepEqual(standardEnhancementIds(manifest), STANDARD_IDS, 'standard must exclude only explicit opt-in enhancements');
 assert.deepEqual(
   parseExplicitEnhancementSelection('branding,chrome', manifest),
   CONFIG_CUSTOM,
@@ -261,6 +277,7 @@ const storedCases = [
   ['wrong schema type', { ...CONFIG_ALL, schemaVersion: '1' }, /schemaVersion/i],
   ['wrong mode', { ...CONFIG_ALL, mode: 'default' }, /mode/i],
   ['all stores no IDs', { ...CONFIG_ALL, enabled: ['chrome'] }, /mode.*all.*empty/i],
+  ['standard stores no IDs', { ...CONFIG_STANDARD, enabled: ['chrome'] }, /mode.*standard.*empty/i],
   ['enabled must be an array', { ...CONFIG_ALL, mode: 'custom', enabled: 'chrome' }, /selection.*array|enabled.*array/i],
   ['enabled IDs must be strings', { ...CONFIG_ALL, mode: 'custom', enabled: [1] }, /enhancement.*id.*string/i],
   ['duplicate enabled ID', { ...CONFIG_ALL, mode: 'custom', enabled: ['chrome', 'chrome'] }, /duplicate.*chrome/i],
@@ -275,9 +292,21 @@ assert.deepEqual(
   CONFIG_CUSTOM,
   'object validation must normalize custom IDs without mutating the caller value',
 );
+assert.equal(serializeEnhancementConfig(CONFIG_STANDARD, manifest), STANDARD_BYTES, 'standard mode must have deterministic canonical bytes');
 assert.equal(serializeEnhancementConfig(CONFIG_ALL, manifest), ALL_BYTES, 'all mode must have deterministic canonical bytes');
 assert.equal(serializeEnhancementConfig(CONFIG_CUSTOM, manifest), CUSTOM_BYTES, 'custom mode must have deterministic canonical bytes');
+assert.deepEqual(parseStoredEnhancementConfig(STANDARD_BYTES, manifest), CONFIG_STANDARD, 'canonical standard JSON must parse');
 assert.deepEqual(parseStoredEnhancementConfig(CUSTOM_BYTES, manifest), CONFIG_CUSTOM, 'canonical stored JSON must parse');
+assert.deepEqual(
+  selectionToStoredEnhancementConfig({ mode: 'standard', enabled: STANDARD_IDS }, manifest),
+  CONFIG_STANDARD,
+  'the resolved standard profile must persist as mode standard',
+);
+assert.throws(
+  () => selectionToStoredEnhancementConfig({ mode: 'standard', enabled: ['chrome'] }, manifest),
+  /standard.*none or every standard ID/i,
+  'a partial standard selection must not silently become a profile',
+);
 
 for (const [label, source] of [
   ['malformed JSON', '{'],
@@ -327,6 +356,14 @@ await withHome('write-all', async home => {
   assert.equal(lstatSync(dirname(path)).mode & 0o777, 0o700, 'new config directory mode must be 0700');
   assert.deepEqual(readdirSync(dirname(path)), ['enhancements.json'], 'successful publication must remove every temporary artifact');
   assert.deepEqual(await readEnhancementConfig({ homeDir: home, manifest }), CONFIG_ALL, 'the file layer must round-trip canonical all mode');
+});
+
+await withHome('write-standard', async home => {
+  const result = await writeEnhancementConfig({ homeDir: home, manifest, selection: { mode: 'standard', enabled: STANDARD_IDS } });
+  const path = join(home, '.clawgod', 'enhancements.json');
+  assert.deepEqual(result, { path, config: CONFIG_STANDARD, bytes: STANDARD_BYTES }, 'write result must report canonical persisted standard state');
+  assert.equal(readFileSync(path, 'utf8'), STANDARD_BYTES, 'mode standard must store an empty enabled array in exact canonical bytes');
+  assert.deepEqual(await readEnhancementConfig({ homeDir: home, manifest }), CONFIG_STANDARD, 'the file layer must round-trip canonical standard mode');
 });
 
 await withHome('write-custom', async home => {

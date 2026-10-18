@@ -2,6 +2,16 @@ import { gate } from '../runtime-features.mjs';
 
 const patches = [
   {
+    // Account spoofing is a bypass, not a baseline: keep it behind the same
+    // explicit opt-in as the content-filter patches below.
+    order: 0,
+    name: 'USER_TYPE → ant',
+    semanticId: 'user-type-ant',
+    pattern: /function ([\w$]+)\(\)\{return"external"\}/g,
+    replacer: (match, fn) => `function ${fn}(){return"ant"}`,
+    sentinel: 'return"external"',
+  },
+  {
     order: 46,
     name: 'Restore Glob/Grep tools (un-inline EMBEDDED_SEARCH_TOOLS)',
     pattern: /function ([\w$]+)\(\)\{if\(!([\w$]+)\("true"\)\)return!1;if\([\w$]+\(\)\)return!1;return (?:process\.env|[\w$]+)\.CLAUDE_CODE_ENTRYPOINT!=="local-agent"\}/g,

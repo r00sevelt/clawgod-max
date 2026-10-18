@@ -80,33 +80,34 @@ bash install.sh --lean-off        # 全ツールを復元。デフォルト
 
 ## 任意の拡張機能（Enhancements）
 
-ClawGod Max は 21 の任意拡張機能を提供し、デフォルトで全て有効です。拡張機能 ID は固定されており、次の順序です。
+ClawGod Max は 21 の任意拡張機能を提供し、デフォルトでは **standard プロファイル**（21 項目のうち `unrestricted-tools` を除く 20 項目）が有効です。拡張機能 ID は固定されており、次の順序です。
 
 | 種類 | 拡張機能 ID |
 |---|---|
 | パッチ | `chrome`、`computer-use`、`design-canvas`、`agents`、`planning`、`voice`、`auto-mode`、`unrestricted-tools`、`paste-images`、`privacy`、`branding`、`classifier-fail-open`、`cleanup-period`、`disable-collapse-read-search`、`enable-keybindings`、`file-read-limit`、`transcript-dialog-replay`、`unlock-ultracode` |
 | プラグイン | `claude-hud`、`claude-mem`、`superpowers` |
 
-非対話環境（パイプインストール、CI、`claude update`）でオプションを指定しない場合、デフォルトで 21 の拡張機能がすべて有効になります。選択内容は厳密な JSON として `~/.clawgod/enhancements.json` に保存されます。
+非対話環境（パイプインストール、CI、`claude update`）でオプションを指定しない場合、デフォルトで standard プロファイル（20 項目）が有効になります。選択内容は厳密な JSON として `~/.clawgod/enhancements.json` に保存されます。
 
 ```json
 {
   "schemaVersion": 1,
-  "mode": "all",
+  "mode": "standard",
   "enabled": []
 }
 ```
 
-`mode` が `all` の場合はマニフェストにある全拡張機能（将来追加される ID を含む）を常に有効にし、`mode` が `custom` の場合は `enabled` に列挙された ID だけを有効にします。
+`mode` が `standard` の場合は opt-in 以外の全拡張機能、`mode` が `all` の場合はマニフェストにある全拡張機能（`unrestricted-tools` と将来追加される ID を含む）、`mode` が `custom` の場合は `enabled` に列挙された ID だけを有効にします。
 
 端末でインストーラーを直接実行すると自動で質問されるため、引数を覚える必要はありません：
 
 ```
   ClawGod Max 拡張機能の選択
-   1) 全21項目（既定、Enter で選択）
+   1) standard 20項目（既定、Enter で選択；バイパス系を除く）
    2) コアのみ（拡張機能なし）
    3) カスタム（項目ごとに選択）
-   Enter: 全項目 · Esc: 中止
+   4) 全21項目（バイパス系を含む、明示的 opt-in）
+   Enter: standard · Esc: 中止
 ```
 
 カスタムメニューはキーボード操作です：`↑`/`↓` でカーソル移動（先頭・末尾でループ）、`Space` でチェック切り替え、`Enter` で確定、`Esc` で上位メニューに戻ります。すべて解除して確定するとコアのみと同じ扱いです。最上位で `Esc` を押すとインストールを中止します。
@@ -116,7 +117,9 @@ ClawGod Max は 21 の任意拡張機能を提供し、デフォルトで全て�
 ```bash
 bash install.sh --choose-enhancements   # 項目ごとのカスタムメニューを直接開く
 bash install.sh --enhancements chrome,computer-use,claude-hud
-bash install.sh --enhancements none   # コアのみ、拡張機能なし
+bash install.sh --enhancements standard   # standard（既定、バイパス系なし）
+bash install.sh --enhancements all        # 全項目（バイパス系を明示的に有効化）
+bash install.sh --enhancements none       # コアのみ、拡張機能なし
 ```
 
 Windows PowerShell では次の引数になります。
@@ -124,6 +127,8 @@ Windows PowerShell では次の引数になります。
 ```powershell
 .\install.ps1 -ChooseEnhancements
 .\install.ps1 -Enhancements chrome,computer-use,claude-hud
+.\install.ps1 -Enhancements standard
+.\install.ps1 -Enhancements all
 .\install.ps1 -Enhancements none
 ```
 

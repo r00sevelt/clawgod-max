@@ -62,6 +62,12 @@ $EnhancementIds = @(
     'superpowers'
 )
 
+# Safety/content bypass enhancements are explicit opt-ins; the default
+# standard profile is every ID above except these.
+$OptInEnhancementIds = @(
+    'unrestricted-tools'
+)
+
 $EnhancementLabels = @(
     'Chrome',
     'Computer Use',
@@ -135,12 +141,13 @@ function Write-EnhancementModeMenu {
         $script:ClawGodMenuTop = [Console]::CursorTop
     }
     Write-Host ''
-    Write-Host (ConvertFrom-ClawGodUtf8 'ICBDbGF3R29kIFBsdXMg5aKe5by66YCJ5oup')
-    Write-Host ((ConvertFrom-ClawGodUtf8 'ICAgMSkg5YWo6YOoIHswfSDpobnlop7lvLrvvIjpu5jorqTvvIzlm57ovabljbPpgInvvIk=') -f $EnhancementIds.Count)
+    Write-Host (ConvertFrom-ClawGodUtf8 'ICBDbGF3R29kIE1heCDlop7lvLrpgInmi6k=')
+    Write-Host ((ConvertFrom-ClawGodUtf8 'ICAgMSkg5qCH5YeGIHswfSDpobnlop7lvLrvvIjpu5jorqTvvIzlm57ovabljbPpgInvvJvkuI3lkKvnu5Xov4fnsbvvvIk=') -f ($EnhancementIds.Count - $OptInEnhancementIds.Count))
     Write-Host (ConvertFrom-ClawGodUtf8 'ICAgMikg5LuF5qC45b+D77yI5LiN6KOF5Lu75L2V5aKe5by677yJ')
     Write-Host (ConvertFrom-ClawGodUtf8 'ICAgMykg6Ieq5a6a5LmJ6I+c5Y2V77yI6YCQ6aG55Yu+6YCJ77yJ')
-    Write-Host (ConvertFrom-ClawGodUtf8 'ICDlm57ovaYg5YWo6YOo5aKe5by6IMK3IEVzYyDpgIDlh7o=')
-    $script:ClawGodMenuRendered = 5
+    Write-Host ((ConvertFrom-ClawGodUtf8 'ICAgNCkg5YWo6YOoIHswfSDpobnlop7lvLrvvIjlkKvnu5Xov4fnsbvvvIk=') -f $EnhancementIds.Count)
+    Write-Host (ConvertFrom-ClawGodUtf8 'ICDlm57ovaYg5qCH5YeG5aKe5by6IMK3IEVzYyDpgIDlh7o=')
+    $script:ClawGodMenuRendered = 6
 }
 
 function Read-EnhancementChoice {
@@ -170,7 +177,7 @@ function Read-EnhancementMode {
     while ($true) {
         Write-EnhancementModeMenu
         $key = Read-EnhancementKey
-        if ($key -eq [ConsoleKey]::Enter -or $key -eq [ConsoleKey]::D1) { return ($EnhancementIds -join ',') }
+        if ($key -eq [ConsoleKey]::Enter -or $key -eq [ConsoleKey]::D1) { return 'standard' }
         if ($key -eq [ConsoleKey]::D2) { return 'none' }
         if ($key -eq [ConsoleKey]::D3) {
             $choice = Read-EnhancementChoice
@@ -178,6 +185,7 @@ function Read-EnhancementMode {
             $script:ClawGodMenuRendered = 0
             continue
         }
+        if ($key -eq [ConsoleKey]::D4) { return ($EnhancementIds -join ',') }
         if ($key -eq [ConsoleKey]::Escape) { return '__CLAWGOD_CANCELLED__' }
         Write-Warn ("Invalid enhancement choice: $key")
     }
@@ -237,7 +245,7 @@ function Initialize-EnhancementSelection {
             Write-EnhancementSelection -Explicit $choice
             return
         }
-        Write-Warn 'Interactive enhancement selection unavailable; using saved selection or all enhancements.'
+        Write-Warn 'Interactive enhancement selection unavailable; using the saved selection or the standard profile.'
     }
     elseif (Test-EnhancementAutoPromptAvailable) {
         $choice = Read-EnhancementMode
