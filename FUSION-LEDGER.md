@@ -104,4 +104,4 @@
 - **基础设施**：新增 `src/generic/patcher/ast-anchors.mjs`（`ANCHOR_PATCH_IDS` + `scanAstAnchors`）；`semantic.mjs` 导出 walk/helper 并接受预解析 tree；`semantic-runner.mjs` 每模块只 parse 一次，按已选锚点 ID 只跑对应 matcher；`entry.mjs` 语义批按 order 排序，`stale + optional` 沿用 regex 的 skip 语义。
 - **第一批转换**：`agents#5`（Agent Teams：env/member + `tengu_amber_flint` 结构）、`planning#22`（Ultrareview：按 `tengu_review_bughunter_config` 字面量绑定 getter，去掉 `var ulu=` 压缩名 sentinel）、`auto-mode#26/#27`（firstParty/anthropicAws 与模型 ID 结构，去掉 300 字 lookahead 与 `claude-*-4-6` 写死）。描述符保留原 regex 字段，供 Task 5 快照和 runtime-features 直测；运行时由 AST matcher 接管。
 - **测试**：新增 `tests/patcher-ast-anchors.mjs`（正/负样本、字符串诱饵、漂移 present、幂等）；`installer-build` 源文件清单加入 `ast-anchors.mjs`；2.1.215 字节 hash、registry、runtime-features 作为回归。
-- **状态**：本地构建通过；待推送云端 CI。
+- **状态**：已推送；云端 Compat Daily run `39153612223` 三平台全绿。2.1.215 字节 hash 保持；真实 2.1.302 安装器 E2E 断言 `OK Agent Teams always enabled` 与 `OK Ultrareview enable (v2.1.215+ gate)` 均实际 apply；新单测 `patcher-ast-anchors` 通过。转换后 2.1.215 计数由 24/59 变为 23/60（v2.1.215+ 语义门取代 rQt 替代门，输出字节不变）。提交 `e60b538`（第 1 批）+ `b11db22`（左结合）/`0ef9c6b`（gate 键）/`a20bf8c`（计数）/`4fb43c0`（E2E 断言）。
