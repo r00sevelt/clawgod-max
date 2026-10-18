@@ -807,6 +807,11 @@ try {
   };
   const fullPluginValidation = e2eEnhancements === '';
   const initialInstallOutput = run('initial --lean-on install', '/bin/bash', [join(root, 'dist/unix/install.sh'), '--lean-on', ...selectionArgs()]);
+  if (fullPluginValidation) {
+    for (const name of ['Agent Teams always enabled', 'Ultrareview enable (v2.1.215+ gate)']) {
+      assert.ok(initialInstallOutput.includes(`OK ${name}`), `initial install must apply the AST anchor: ${name}`);
+    }
+  }
   console.log(validatePatchSummary('unix initial', initialInstallOutput));
   console.log(validateEnhancementSummary(initialInstallOutput));
   console.log(formatPluginSummary(validatePluginSummary(initialInstallOutput)));
