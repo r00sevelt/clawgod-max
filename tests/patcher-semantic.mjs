@@ -36,12 +36,15 @@ try {
   for (const [label, runner] of await getPatcherSources()) {
     const dir = join(root, label.replaceAll(' ', '-'));
     mkdirSync(join(dir, 'chunks'), { recursive: true });
+    mkdirSync(join(dir, '.clawgod'), { recursive: true, mode: 0o700 });
+    const enhancementsFile = join(dir, '.clawgod', 'enhancements.json');
+    writeFileSync(enhancementsFile, '{\n  "schemaVersion": 1,\n  "mode": "all",\n  "enabled": []\n}\n', { mode: 0o600 });
     const entry = join(dir, 'cli.original.cjs'), chunk = join(dir, 'chunks', 'feature.js');
     const patcher = join(dir, 'patch.mjs');
     writeFileSync(patcher, runner);
     writeFileSync(entry, 'export {}; function remoteEligibilityDetails(){return {eligible:true}}');
     writeFileSync(chunk, source);
-    const run = (...args) => spawnSync(process.execPath, [patcher, ...args], { encoding: 'utf8', timeout: 30000, env: { ...process.env, HTTPS_PROXY: 'http://127.0.0.1:1' } });
+    const run = (...args) => spawnSync(process.execPath, [patcher, ...args, '--enhancements-file', enhancementsFile], { encoding: 'utf8', timeout: 30000, env: { ...process.env, HTTPS_PROXY: 'http://127.0.0.1:1' } });
     for (const arg of ['--dry-run', '--verify']) {
       const result = run(arg);
       assert.equal(result.status, 0, `${label}: ${result.stdout}${result.stderr}`);
