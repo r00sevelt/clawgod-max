@@ -23493,7 +23493,7 @@ var visitors = [
         ctx.patched(CONTEXT_LIMIT_ID);
         if (registration)
           ctx.edit(CONTEXT_LIMIT_ID, { type: "Insertion", start: declaration.end, end: declaration.end }, registration);
-      } else if (declaration?.near || state.marker) {
+      } else if (declaration?.near || state.marker || code.includes("200000")) {
         ctx.present(CONTEXT_LIMIT_ID);
       }
       if (state.patchedComparison)
