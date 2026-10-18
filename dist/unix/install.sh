@@ -23140,11 +23140,13 @@ function getterCallName(node) {
 function isUltrareviewGateArg(arg, getterName) {
   if (arg?.type !== "LogicalExpression" || arg.operator !== "&&")
     return false;
-  if (arg.left?.type !== "BinaryExpression" || arg.left.operator !== "===" || !isTrue(arg.left.right))
-    return false;
-  if (getterCallName(arg.left.left) !== getterName)
-    return false;
-  return arg.right?.type === "LogicalExpression" && arg.right.operator === "&&" && isCall(arg.right.left) && arg.right.left.arguments.length === 0 && arg.right.right?.type === "UnaryExpression" && arg.right.right.operator === "!" && isCall(arg.right.right.argument) && arg.right.right.argument.arguments.length === 0;
+  const getterCheck = (node) => node?.type === "BinaryExpression" && node.operator === "===" && isTrue(node.right) && getterCallName(node.left) === getterName;
+  const callCheck = (node) => isCall(node) && node.arguments.length === 0;
+  const notCallCheck = (node) => node?.type === "UnaryExpression" && node.operator === "!" && isCall(node.argument) && node.argument.arguments.length === 0;
+  if (getterCheck(arg.left) && arg.right?.type === "LogicalExpression" && arg.right.operator === "&&" && callCheck(arg.right.left) && notCallCheck(arg.right.right)) {
+    return true;
+  }
+  return arg.left?.type === "LogicalExpression" && arg.left.operator === "&&" && getterCheck(arg.left.left) && callCheck(arg.left.right) && notCallCheck(arg.right);
 }
 function containsGetterCall(arg, getterName) {
   if (!arg)
