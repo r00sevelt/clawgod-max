@@ -89,7 +89,7 @@
 - **实现**：`semantic-runner.mjs` 新增 `SourceCompatibilityError`；初次 `scanAstPatches` 的 SyntaxError 归类为兼容失败；编辑后 `parsePatchSource(patched)` 的 SyntaxError 仍为 fatal。`entry.mjs` 捕获该错误 → `failed++`、跳过后续 regex/custom patch 循环；带 `--allow-compatibility-fallback` 返回 42，否则 1；不写 bundle、不建 `.bak`。
 - **测试**：`tests/patcher-compatibility-fallback.mjs` 新增 unparseable source 三用例（strict=1 / fallback=42 / dry-run+fallback=1），断言目标与 chunks 不变、无 `.bak`。
 - **验证**：`patcher-compatibility-fallback`、`patcher-semantic-failures`、`patcher-semantic-scanner`、`patcher-semantic` 全绿；`bun build.mjs` 重建 dist 且 `--check` 通过。Windows 全量 `tests/*.mjs` 的 18 项失败均为既有 POSIX/环境限制（0600 模式、/bin/bash、shell launcher、mkdtemp 引号、ENOTDIR、信号传播），与本改动无关；云端 CI 待跑。
-- **状态**：随本次提交推送；云端 Compat Daily 复核中（本地不再跑测试）。
+- **状态**：已推送；云端 Compat Daily run `39149515638` 三 job 全绿（Linux/macOS/Windows）。
 
 ## 2026-10-19：补丁分级（standard / all，绕过类 opt-in）
 
@@ -97,4 +97,4 @@
 - **实现**：新增 `mode:"standard"` 作为默认档，21 项中排除显式 opt-in `unrestricted-tools`（20 项）；`all` 仍是显式全开；`custom` 不变。`USER_TYPE → ant` 从 core 移入 `unrestricted-tools`，与其余绕过同档。`--enhancements standard|all|none` 与 PowerShell `-Enhancements` 同步支持；交互菜单默认标准档，新增选项 4 为全部。
 - **兼容**：已保存 `mode:"all"` 的旧配置继续全开；缺失配置的新装/更新走 standard；`custom` 选择不受影响。
 - **测试**：增强配置引擎、安装器选择、E2E 期望、patcher 注册表断言同步更新；本地不跑测试，全部交云端 CI。
-- **状态**：本地改动，待推送。
+- **状态**：已推送；云端 Compat Daily run `39150901066` 三 job 全绿（Linux/macOS/Windows）。真实安装器 E2E 确认 `mode=standard`、20 enabled/1 disabled、0 failed；subset/core-only 契约不变。期间修正 4 处测试侧旧断言（README_JP 标记、E2E 契约、PowerShell 菜单头、patcher-semantic 显式 all 配置）。
