@@ -243,6 +243,7 @@ const patches = [
   {
     order: 13,
     name: 'Claude in Chrome agents config state',
+    semanticId: 'chrome-agents-config-ast',
     pattern: /([\w$]+)=\{addDir:\[\],pluginDir:\[\],pluginDirNoMcp:\[\],settings:void 0,mcpConfig:\[\],strictMcpConfig:!1/g,
     replacer: (match, config) => `${config}={addDir:[],pluginDir:[],pluginDirNoMcp:[],settings:void 0,mcpConfig:[],strictMcpConfig:!1,chrome:!1,noChrome:!1`,
     appliedMarker: /strictMcpConfig:!1,chrome:!1,noChrome:!1/,

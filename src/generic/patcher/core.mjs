@@ -1,5 +1,8 @@
 import acorn from './vendor/acorn.cjs';
 import { applySemanticPatch } from './semantic-runner.mjs';
+import { terminalReplyDelay } from './terminal-reply-delay.mjs';
+
+export { terminalReplyDelay };
 
 export async function loadAcorn() {
   return acorn;
@@ -133,19 +136,6 @@ async function applyContextLimitPatch(source, { dryRun, verify, rootDir }) {
   return { status: 'applied', count: replacements.length, code: next };
 }
 
-// v1.9.5 upstream DA1 fix: only wait for incomplete probe replies, never
-// filter input. Keep this function self-contained: the patch embeds it so old
-// wrappers also work without a new runtime helper file.
-export function terminalReplyDelay(querier, reader, now) {
-  const parse = reader?.parse;
-  if (parse?.mode !== 'NORMAL' || typeof parse.incomplete !== 'string') return 0;
-  if (!/^\x1b(?:\[(?:\?[\d;]*)?)?$/.test(parse.incomplete)) return 0;
-  if (!Array.isArray(querier?.queue) || !querier.queue.some(entry =>
-    entry?.kind === 'barrier' || (entry?.kind === 'sentinel' && entry.written !== false))) return 0;
-  if (!Number.isFinite(now) || !Number.isFinite(reader.lastInputAt)) return 0;
-  return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
-}
-
 const patches = [
   {
     order: 1,
@@ -198,6 +188,7 @@ const patches = [
   {
     order: 90,
     id: 'terminal-reply-fragments',
+    semanticId: 'terminal-reply-ast',
     name: 'Preserve split terminal replies while a DA1 probe is pending',
     pattern: /(flushIncomplete=\(\)=>\{if\(this\.incompleteEscapeTimer=null,![\w$]+\(this\.keyReader\)\)return;if\(this\.props\.stdin\.readableLength>0\)\{this\.incompleteEscapeTimer=setTimeout\(this\.flushIncomplete,[\w$]+\);return\}let ([\w$]+)=performance\.now\(\);)(this\.applyKeysRead\([\w$]+\(this\.keyReader,\2\),\2\)\})/g,
     replacer: (match, prefix, now, suffix) => prefix +
@@ -257,6 +248,7 @@ async function applyBuiltinHooksPatch(source, { dryRun, verify }) {
 const customPatches = [{
   order: 61,
   name: 'Context limit configurable',
+  semanticId: 'context-limit-ast',
   apply: applyContextLimitPatch,
 }, {
   order: 64,

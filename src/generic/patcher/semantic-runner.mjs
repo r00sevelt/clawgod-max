@@ -1,4 +1,5 @@
 import { ANCHOR_PATCH_IDS, scanAstAnchors } from './ast-anchors.mjs';
+import { BATCH2_ANCHOR_IDS, scanBatch2Anchors } from './ast-anchors2/index.mjs';
 import { AST_PATCH_IDS, applyAstEdits, parsePatchSource, scanAstPatches } from './semantic.mjs';
 
 export const MODULE_SEPARATOR = '\n/*__CLAWGOD_MODULE_BOUNDARY__*/\n';
@@ -14,7 +15,7 @@ export function applySemanticPatches(source, descriptors, { dryRun = false, veri
   const modules = source.split(MODULE_SEPARATOR);
   const anchorIds = new Set(descriptors
     .map(descriptor => descriptor.semanticId)
-    .filter(id => id && ANCHOR_PATCH_IDS.includes(id)));
+    .filter(id => id && (ANCHOR_PATCH_IDS.includes(id) || BATCH2_ANCHOR_IDS.includes(id))));
   const scans = [];
   for (let index = 0; index < modules.length; index++) {
     try {
@@ -22,9 +23,13 @@ export function applySemanticPatches(source, descriptors, { dryRun = false, veri
       const anchors = anchorIds.size
         ? scanAstAnchors(modules[index], { tree, ids: anchorIds })
         : {};
+      const anchors2 = anchorIds.size
+        ? scanBatch2Anchors(modules[index], { tree, ids: anchorIds })
+        : {};
       scans.push({
         ...scanAstPatches(modules[index], { tree }),
         ...anchors,
+        ...anchors2,
       });
     } catch (error) {
       if (error?.name === 'SyntaxError') {
@@ -37,7 +42,7 @@ export function applySemanticPatches(source, descriptors, { dryRun = false, veri
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {
     const id = descriptor.semanticId;
-    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id)) {
+    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id) && !BATCH2_ANCHOR_IDS.includes(id)) {
       throw new Error(`Unknown semantic patch: ${id}`);
     }
     const matches = scans.flatMap(scan => scan[id].matches);

@@ -23280,6 +23280,540 @@ function scanAstAnchors(code, { tree = parsePatchSource(code), ids = ANCHOR_PATC
   return results;
 }
 
+// src/generic/patcher/terminal-reply-delay.mjs
+function terminalReplyDelay(querier, reader, now) {
+  const parse = reader?.parse;
+  if (parse?.mode !== "NORMAL" || typeof parse.incomplete !== "string")
+    return 0;
+  if (!/^\x1b(?:\[(?:\?[\d;]*)?)?$/.test(parse.incomplete))
+    return 0;
+  if (!Array.isArray(querier?.queue) || !querier.queue.some((entry) => entry?.kind === "barrier" || entry?.kind === "sentinel" && entry.written !== false))
+    return 0;
+  if (!Number.isFinite(now) || !Number.isFinite(reader.lastInputAt))
+    return 0;
+  return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
+}
+
+// src/generic/patcher/ast-anchors2/core.mjs
+var CONTEXT_LIMIT_ID = "context-limit-ast";
+var TERMINAL_REPLY_ID = "terminal-reply-ast";
+var ENV_EXPR = "(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||+process.env.CLAUDE_CODE_MAX_CONTEXT_TOKENS||200000)";
+var REFRESH_MARKER = "globalThis.__clawgod_context_limit_refresh_v1__=";
+var REFRESH_CALL = ",globalThis.__clawgod_context_limit_refresh_v1__?.()";
+var TERMINAL_MARKER = "/*__clawgod_terminal_reply_fragments__*/";
+var STATE_KEY = "__clawgodAstAnchors2Core";
+var SIMPLE_NAME = /^[A-Za-z0-9_$]+$/;
+var stateFor = (ctx) => ctx[STATE_KEY] ??= {
+  contextLimit: { declarations: [], comparisons: [], envStatements: [], esm: false, marker: false, patchedComparison: false },
+  terminal: { sawField: false, matched: false }
+};
+var isSimpleIdentifier = (node) => node?.type === "Identifier" && SIMPLE_NAME.test(node.name);
+var numeric = (node) => node?.type === "Literal" && typeof node.value === "number" ? node.value : null;
+var thisMember2 = (node, name) => member(node, name) && node.object?.type === "ThisExpression";
+function thisMemberChain(node, names) {
+  let current = node;
+  for (let i = names.length - 1;i >= 0; i--) {
+    if (!member(current, names[i]))
+      return false;
+    current = current.object;
+  }
+  return current?.type === "ThisExpression";
+}
+var isEnvOperand = (node, name) => node?.type === "UnaryExpression" && node.operator === "+" && member(node.argument, name) && member(node.argument.object, "env") && node.argument.object.object?.type === "Identifier" && node.argument.object.object.name === "process";
+function isContextLimitEnvExpr(node) {
+  if (node?.type !== "LogicalExpression" || node.operator !== "||")
+    return false;
+  const left = node.left;
+  return left?.type === "LogicalExpression" && left.operator === "||" && isEnvOperand(left.left, "CLAUDE_CODE_CONTEXT_LIMIT") && isEnvOperand(left.right, "CLAUDE_CODE_MAX_CONTEXT_TOKENS") && literal(node.right, 200000);
+}
+function classifyContextDeclaration(node) {
+  if (node?.type !== "VariableDeclaration" || node.kind !== "var")
+    return null;
+  const declarations = node.declarations;
+  if (declarations.length !== 4 && declarations.length !== 5)
+    return null;
+  const names = declarations.map((declaration) => isSimpleIdentifier(declaration.id) ? declaration.id.name : null);
+  if (names.some((name) => !name))
+    return null;
+  if (numeric(declarations[2].init) !== 32000 || numeric(declarations[3].init) !== 128000)
+    return null;
+  if (declarations.length === 5 && numeric(declarations[4].init) !== 1e6)
+    return null;
+  const dual = literal(declarations[0].init, 200000) && literal(declarations[1].init, 200000);
+  const already = isContextLimitEnvExpr(declarations[0].init) && isContextLimitEnvExpr(declarations[1].init);
+  return { start: node.start, end: declarations[declarations.length - 1].end, names, dual, already, near: !dual && !already };
+}
+function declarationTerminated(code, declaration) {
+  return /^\s*;/.test(code.slice(declaration.end, declaration.end + 16));
+}
+function looksLikeContextDefaults(node) {
+  if (node?.type !== "VariableDeclaration" || node.kind !== "var")
+    return false;
+  const declarations = node.declarations;
+  if (declarations.length < 4 || declarations.length > 6)
+    return false;
+  const firstTwo = declarations.slice(0, 2).some((declaration) => literal(declaration.init, 200000) || isContextLimitEnvExpr(declaration.init));
+  const values = declarations.map((declaration) => numeric(declaration.init));
+  return firstTwo && values.includes(32000) && values.includes(128000);
+}
+var isFalseLiteral = (node) => node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 1);
+function comparisonMatch(node) {
+  if (node?.type !== "ReturnStatement" || node.argument?.type !== "ConditionalExpression")
+    return null;
+  const conditional = node.argument;
+  if (!isSimpleIdentifier(conditional.test) || !isFalseLiteral(conditional.alternate))
+    return null;
+  const comparison = conditional.consequent;
+  if (comparison?.type !== "BinaryExpression" || comparison.operator !== ">" || !literal(comparison.right, 200000))
+    return null;
+  const call = comparison.left;
+  if (call?.type !== "CallExpression" || call.arguments.length !== 1 || !isSimpleIdentifier(call.callee) || !isSimpleIdentifier(call.arguments[0]))
+    return null;
+  if (call.arguments[0].name !== conditional.test.name)
+    return null;
+  return { comparison, callee: call.callee.name, name: conditional.test.name };
+}
+function isPatchedComparison(node) {
+  return node?.argument?.consequent?.type === "BinaryExpression" && node.argument.consequent.operator === ">" && isContextLimitEnvExpr(node.argument.consequent.right);
+}
+var isEnvAssignCall = (node) => node?.type === "CallExpression" && member(node.callee, "assign") && node.callee.object?.type === "Identifier" && node.callee.object.name === "Object" && node.arguments.length >= 2 && member(node.arguments[0], "env") && node.arguments[0].object?.type === "Identifier" && node.arguments[0].object.name === "process";
+function terminalReplyShape(node) {
+  if (node?.type !== "PropertyDefinition" || node.computed || node.static === true)
+    return null;
+  if (node.key?.type !== "Identifier" || node.key.name !== "flushIncomplete")
+    return null;
+  const fn = node.value;
+  if (fn?.type !== "ArrowFunctionExpression" || fn.async || fn.generator || fn.params.length !== 0)
+    return null;
+  const body = fn.body;
+  if (body?.type !== "BlockStatement" || body.body.length !== 4)
+    return null;
+  const [guardIf, bufferIf, nowDeclaration, applyStatement] = body.body;
+  if (guardIf?.type !== "IfStatement" || guardIf.consequent?.type !== "ReturnStatement" || guardIf.consequent.argument !== null)
+    return null;
+  if (guardIf.test?.type !== "SequenceExpression" || guardIf.test.expressions.length !== 2)
+    return null;
+  const [reset, guard] = guardIf.test.expressions;
+  if (reset?.type !== "AssignmentExpression" || reset.operator !== "=" || !thisMember2(reset.left, "incompleteEscapeTimer") || !literal(reset.right, null))
+    return null;
+  if (guard?.type !== "UnaryExpression" || guard.operator !== "!" || guard.argument?.type !== "CallExpression")
+    return null;
+  if (!isSimpleIdentifier(guard.argument.callee) || guard.argument.arguments.length !== 1 || !thisMember2(guard.argument.arguments[0], "keyReader"))
+    return null;
+  if (bufferIf?.type !== "IfStatement" || bufferIf.test?.type !== "BinaryExpression" || bufferIf.test.operator !== ">" || !thisMemberChain(bufferIf.test.left, ["props", "stdin", "readableLength"]) || !literal(bufferIf.test.right, 0))
+    return null;
+  const bufferBody = bufferIf.consequent;
+  if (bufferBody?.type !== "BlockStatement" || bufferBody.body.length !== 2)
+    return null;
+  const [timerStatement, timerReturn] = bufferBody.body;
+  if (timerStatement?.type !== "ExpressionStatement" || timerStatement.expression?.type !== "AssignmentExpression")
+    return null;
+  const timerAssignment = timerStatement.expression;
+  if (timerAssignment.operator !== "=" || !thisMember2(timerAssignment.left, "incompleteEscapeTimer"))
+    return null;
+  const timerCall = timerAssignment.right;
+  if (timerCall?.type !== "CallExpression" || timerCall.callee?.type !== "Identifier" || timerCall.callee.name !== "setTimeout" || timerCall.arguments.length !== 2)
+    return null;
+  if (!thisMember2(timerCall.arguments[0], "flushIncomplete") || !isSimpleIdentifier(timerCall.arguments[1]))
+    return null;
+  if (timerReturn?.type !== "ReturnStatement" || timerReturn.argument !== null)
+    return null;
+  if (nowDeclaration?.type !== "VariableDeclaration" || nowDeclaration.kind !== "let" || nowDeclaration.declarations.length !== 1)
+    return null;
+  const now = nowDeclaration.declarations[0];
+  if (!isSimpleIdentifier(now.id) || now.init?.type !== "CallExpression" || now.init.arguments.length !== 0)
+    return null;
+  if (!member(now.init.callee, "now") || now.init.callee.object?.type !== "Identifier" || now.init.callee.object.name !== "performance")
+    return null;
+  if (applyStatement?.type !== "ExpressionStatement" || applyStatement.expression?.type !== "CallExpression")
+    return null;
+  const apply = applyStatement.expression;
+  if (!thisMember2(apply.callee, "applyKeysRead") || apply.arguments.length !== 2)
+    return null;
+  if (!isSimpleIdentifier(apply.arguments[1]) || apply.arguments[1].name !== now.id.name)
+    return null;
+  const flush = apply.arguments[0];
+  if (flush?.type !== "CallExpression" || !isSimpleIdentifier(flush.callee) || flush.arguments.length !== 2)
+    return null;
+  if (!thisMember2(flush.arguments[0], "keyReader") || !isSimpleIdentifier(flush.arguments[1]) || flush.arguments[1].name !== now.id.name)
+    return null;
+  return { now: now.id.name, end: nowDeclaration.end };
+}
+var visitors = [
+  {
+    id: CONTEXT_LIMIT_ID,
+    visit(node, ctx) {
+      const state = stateFor(ctx).contextLimit;
+      if (node.type === "ImportDeclaration" || node.type === "ExportNamedDeclaration" || node.type === "ExportDefaultDeclaration" || node.type === "ExportAllDeclaration") {
+        state.esm = true;
+        return;
+      }
+      if (node.type === "VariableDeclaration") {
+        if (node.kind !== "var")
+          return;
+        const declaration = classifyContextDeclaration(node);
+        if (!declaration) {
+          if (looksLikeContextDefaults(node))
+            state.marker = true;
+          return;
+        }
+        if (!declarationTerminated(ctx.code, declaration)) {
+          state.marker = true;
+          return;
+        }
+        state.declarations.push(declaration);
+        return;
+      }
+      if (node.type === "ReturnStatement") {
+        const match = comparisonMatch(node);
+        if (match)
+          state.comparisons.push(match);
+        else if (isPatchedComparison(node))
+          state.patchedComparison = true;
+        return;
+      }
+      if (node.type !== "ExpressionStatement")
+        return;
+      const expression = node.expression;
+      const calls = expression?.type === "SequenceExpression" ? expression.expressions.filter(isEnvAssignCall) : isEnvAssignCall(expression) ? [expression] : [];
+      if (calls.length)
+        state.envStatements.push({ statement: node, calls });
+    },
+    finalize(ctx) {
+      const state = stateFor(ctx).contextLimit;
+      const code = ctx.code;
+      const declarations = [...state.declarations].sort((left, right) => left.start - right.start);
+      const declaration = declarations.find((candidate) => candidate.dual || candidate.already) ?? declarations[0] ?? null;
+      const markerSeen = code.includes(REFRESH_MARKER);
+      const registration = declaration && state.esm && !markerSeen ? `;${REFRESH_MARKER}()=>{${declaration.names[0]}=${ENV_EXPR};${declaration.names[1]}=${ENV_EXPR}}` : "";
+      if (declaration?.dual) {
+        const [, a, b, c, d, e] = declaration.names;
+        ctx.edit(CONTEXT_LIMIT_ID, { type: "ContextLimitDeclaration", start: declaration.start, end: declaration.end }, `var ${a}=${ENV_EXPR},${b}=${ENV_EXPR},${c}=32000,${d}=128000${e ? `,${e}=1e6` : ""}${registration}`);
+      } else if (declaration?.already) {
+        ctx.patched(CONTEXT_LIMIT_ID);
+        if (registration)
+          ctx.edit(CONTEXT_LIMIT_ID, { type: "Insertion", start: declaration.end, end: declaration.end }, registration);
+      } else if (declaration?.near || state.marker) {
+        ctx.present(CONTEXT_LIMIT_ID);
+      }
+      if (state.patchedComparison)
+        ctx.patched(CONTEXT_LIMIT_ID);
+      for (const match of state.comparisons) {
+        ctx.edit(CONTEXT_LIMIT_ID, match.comparison, `${match.callee}(${match.name})>${ENV_EXPR}`);
+      }
+      const applicable = declaration?.dual || declaration?.already || state.esm;
+      if (!applicable)
+        return;
+      const direct = !state.esm && (declaration?.dual || declaration?.already);
+      const insertion = direct ? `;${declaration.names[0]}=${ENV_EXPR};${declaration.names[1]}=${ENV_EXPR};` : REFRESH_CALL;
+      let count = 0;
+      for (const site of state.envStatements) {
+        for (const call of site.calls) {
+          if (count >= 6)
+            break;
+          const end = direct ? site.statement.end : call.end;
+          if (!code.startsWith(insertion, end)) {
+            ctx.edit(CONTEXT_LIMIT_ID, { type: "Insertion", start: end, end }, insertion);
+          }
+          count++;
+        }
+      }
+    }
+  },
+  {
+    id: TERMINAL_REPLY_ID,
+    visit(node, ctx) {
+      if (node.type !== "PropertyDefinition" || node.key?.type !== "Identifier" || node.key.name !== "flushIncomplete")
+        return;
+      const state = stateFor(ctx).terminal;
+      state.sawField = true;
+      if (ctx.code.includes(TERMINAL_MARKER))
+        return;
+      const shape = terminalReplyShape(node);
+      if (!shape)
+        return;
+      state.matched = true;
+      const insertion = `${TERMINAL_MARKER}const _clawgodReplyDelay=(${terminalReplyDelay.toString()})(this.querier,this.keyReader,${shape.now});` + "if(_clawgodReplyDelay>0){this.incompleteEscapeTimer=setTimeout(this.flushIncomplete,_clawgodReplyDelay);return}";
+      ctx.edit(TERMINAL_REPLY_ID, { type: "Insertion", start: shape.end, end: shape.end }, insertion);
+    },
+    finalize(ctx) {
+      const state = stateFor(ctx).terminal;
+      if (ctx.code.includes(TERMINAL_MARKER))
+        ctx.patched(TERMINAL_REPLY_ID);
+      else if (state.sawField && !state.matched)
+        ctx.present(TERMINAL_REPLY_ID);
+    }
+  }
+];
+
+// src/generic/patcher/ast-anchors2/chrome.mjs
+var ID = "chrome-agents-config-ast";
+var REQUIRED = ["addDir", "pluginDir", "pluginDirNoMcp", "settings", "mcpConfig", "strictMcpConfig"];
+var emptyArray = (node) => node?.type === "ArrayExpression" && node.elements.length === 0;
+var voidZero = (node) => node?.type === "UnaryExpression" && node.operator === "void" && literal(node.argument, 0);
+var notTrue = (node) => node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 1);
+function keyName(property) {
+  if (property.computed) {
+    return property.key?.type === "Literal" && typeof property.key.value === "string" ? property.key.value : null;
+  }
+  if (property.key?.type === "Identifier")
+    return property.key.name;
+  if (property.key?.type === "Literal" && typeof property.key.value === "string")
+    return property.key.value;
+  return null;
+}
+function configState(node) {
+  if (node.type !== "ObjectExpression")
+    return null;
+  const properties = new Map;
+  for (const property of node.properties) {
+    if (property.type !== "Property" || property.kind !== "init" || property.method)
+      return null;
+    const name = keyName(property);
+    if (name === null || properties.has(name))
+      return null;
+    properties.set(name, property);
+  }
+  if (!REQUIRED.every((name) => properties.has(name)))
+    return null;
+  if (!emptyArray(properties.get("addDir").value) || !emptyArray(properties.get("pluginDir").value) || !emptyArray(properties.get("pluginDirNoMcp").value) || !voidZero(properties.get("settings").value) || !emptyArray(properties.get("mcpConfig").value) || !notTrue(properties.get("strictMcpConfig").value))
+    return null;
+  return properties;
+}
+var visitors2 = [{
+  id: ID,
+  visit(node, ctx) {
+    const properties = configState(node);
+    if (!properties)
+      return;
+    const hasChrome = properties.has("chrome");
+    const hasNoChrome = properties.has("noChrome");
+    if (hasChrome || hasNoChrome) {
+      if (hasChrome && hasNoChrome)
+        ctx.patched(ID);
+      else
+        ctx.ambiguous(ID);
+      return;
+    }
+    const parent = ctx.parents.get(node);
+    const identifier = parent?.type === "VariableDeclarator" && parent.init === node && parent.id?.type === "Identifier" ? parent.id : parent?.type === "AssignmentExpression" && parent.right === node && parent.operator === "=" && parent.left?.type === "Identifier" ? parent.left : null;
+    if (!identifier)
+      return;
+    const strict = properties.get("strictMcpConfig");
+    ctx.edit(ID, { start: identifier.start, end: strict.end }, `${ctx.code.slice(identifier.start, strict.end)},chrome:!1,noChrome:!1`);
+  }
+}];
+
+// src/generic/patcher/ast-anchors2/agents.mjs
+var ID2 = "agents-session-metadata-ast";
+var MARKER = "/*__clawgod_agents_session_id__*/";
+var DEBUG_FLAGS = [
+  "=--debug",
+  "=-d",
+  "=--debug-to-stderr",
+  "=-d2e",
+  "s--debug=",
+  "s--debug-file="
+];
+var isIdentifier2 = (node) => node?.type === "Identifier";
+var isString2 = (node, value) => literal(node, value) && typeof value === "string";
+var isTrue2 = (node) => literal(node, true) || node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 0);
+var isFalse2 = (node) => literal(node, false) || node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 1);
+var isLengthOf = (node, name) => member(node, "length") && node.object?.type === "Identifier" && node.object.name === name;
+function isElementOf(node, args, index) {
+  return node?.type === "MemberExpression" && node.computed && node.object?.type === "Identifier" && node.object.name === args && isIdentifier2(node.property) && node.property.name === index;
+}
+function isIndexPlusOne(node, index) {
+  return node?.type === "BinaryExpression" && node.operator === "+" && isIdentifier2(node.left) && node.left.name === index && literal(node.right, 1);
+}
+function checkSignature(node, argument) {
+  if (node?.type === "BinaryExpression" && node.operator === "===" && isIdentifier2(node.left) && node.left.name === argument && node.right?.type === "Literal" && typeof node.right.value === "string") {
+    return `=${node.right.value}`;
+  }
+  if (node?.type === "CallExpression" && member(node.callee, "startsWith") && node.callee.object?.type === "Identifier" && node.callee.object.name === argument && node.arguments.length === 1 && node.arguments[0]?.type === "Literal" && typeof node.arguments[0].value === "string") {
+    return `s${node.arguments[0].value}`;
+  }
+  return null;
+}
+function flattenOr(node, out = []) {
+  if (node?.type === "LogicalExpression" && node.operator === "||") {
+    flattenOr(node.left, out);
+    flattenOr(node.right, out);
+  } else
+    out.push(node);
+  return out;
+}
+function isDebugContinue(statement, argument) {
+  if (statement?.type !== "IfStatement" || statement.consequent?.type !== "ContinueStatement") {
+    return false;
+  }
+  const checks = flattenOr(statement.test).map((node) => checkSignature(node, argument));
+  if (checks.length !== DEBUG_FLAGS.length || checks.includes(null))
+    return false;
+  const seen = new Set(checks);
+  return seen.size === DEBUG_FLAGS.length && DEBUG_FLAGS.every((flag) => seen.has(flag));
+}
+function isSkipPair(statement, argument, index, args, flag) {
+  if (statement?.type !== "IfStatement")
+    return false;
+  const test = statement.test;
+  if (test?.type !== "LogicalExpression" || test.operator !== "&&")
+    return false;
+  if (test.left?.type !== "BinaryExpression" || test.left.operator !== "===" || !isIdentifier2(test.left.left) || test.left.left.name !== argument || !isString2(test.left.right, flag))
+    return false;
+  if (test.right?.type !== "BinaryExpression" || test.right.operator !== "<" || !isIndexPlusOne(test.right.left, index) || !isLengthOf(test.right.right, args))
+    return false;
+  const body = statement.consequent;
+  if (body?.type !== "BlockStatement" || body.body.length !== 2)
+    return false;
+  const [increment, next] = body.body;
+  return increment.type === "ExpressionStatement" && increment.expression?.type === "UpdateExpression" && increment.expression.operator === "++" && !increment.expression.prefix && isIdentifier2(increment.expression.argument) && increment.expression.argument.name === index && next.type === "ContinueStatement";
+}
+function containsString2(root, value) {
+  let found = false;
+  walk(root, (node) => {
+    if (isString2(node, value))
+      found = true;
+  });
+  return found;
+}
+function readLoop(fn) {
+  if (fn.type !== "FunctionDeclaration" || !isIdentifier2(fn.id) || fn.async || fn.generator)
+    return null;
+  if (fn.params.length !== 1 || !isIdentifier2(fn.params[0]))
+    return null;
+  const args = fn.params[0].name;
+  const statements = fn.body?.type === "BlockStatement" ? fn.body.body : null;
+  if (!statements || statements.length !== 2)
+    return null;
+  const [loop, tail] = statements;
+  if (loop.type !== "ForStatement" || tail.type !== "ReturnStatement" || !isTrue2(tail.argument)) {
+    return null;
+  }
+  const init = loop.init;
+  if (init?.type !== "VariableDeclaration" || init.kind !== "let" || init.declarations.length !== 1)
+    return null;
+  const declaration = init.declarations[0];
+  if (!isIdentifier2(declaration.id) || !literal(declaration.init, 0))
+    return null;
+  const index = declaration.id.name;
+  const test = loop.test;
+  if (test?.type !== "BinaryExpression" || test.operator !== "<" || !isIdentifier2(test.left) || test.left.name !== index || !isLengthOf(test.right, args))
+    return null;
+  const update = loop.update;
+  if (update?.type !== "UpdateExpression" || update.operator !== "++" || update.prefix || !isIdentifier2(update.argument) || update.argument.name !== index)
+    return null;
+  if (loop.body?.type !== "BlockStatement")
+    return null;
+  const body = loop.body.body;
+  if (body.length < 3)
+    return null;
+  const binding = body[0];
+  if (binding.type !== "VariableDeclaration" || binding.kind !== "let" || binding.declarations.length !== 1)
+    return null;
+  const element = binding.declarations[0];
+  if (!isIdentifier2(element.id) || !isElementOf(element.init, args, index))
+    return null;
+  const last = body[body.length - 1];
+  if (last.type !== "ReturnStatement" || !isFalse2(last.argument))
+    return null;
+  return { args, index, argument: element.id.name, middle: body.slice(1, -1) };
+}
+function classify(fn) {
+  const loop = readLoop(fn);
+  if (!loop)
+    return null;
+  const { args, index, argument, middle } = loop;
+  if (middle.length === 2 && isDebugContinue(middle[0], argument) && isSkipPair(middle[1], argument, index, args, "--debug-file")) {
+    return { kind: "match", insertAt: middle[1].end, argument, index, args };
+  }
+  if (middle.length === 3 && isDebugContinue(middle[0], argument) && isSkipPair(middle[1], argument, index, args, "--debug-file") && isSkipPair(middle[2], argument, index, args, "--session-id")) {
+    return { kind: "patched" };
+  }
+  return middle.some((statement) => containsString2(statement, "--debug-file")) ? { kind: "drift" } : null;
+}
+var visitors3 = [{
+  id: ID2,
+  visit(node, ctx) {
+    if (node.type !== "FunctionDeclaration")
+      return;
+    const shape = classify(node);
+    if (!shape)
+      return;
+    if (shape.kind === "patched") {
+      ctx.patched(ID2);
+      return;
+    }
+    if (shape.kind === "drift") {
+      if (!ctx.code.includes(MARKER))
+        ctx.present(ID2);
+      return;
+    }
+    ctx.edit(ID2, { start: shape.insertAt, end: shape.insertAt }, `if(${shape.argument}==="--session-id"${MARKER}&&${shape.index}+1<${shape.args}.length)` + `{${shape.index}++;continue}`);
+  },
+  finalize(ctx) {
+    if (ctx.results[ID2].matches.length > 1)
+      ctx.ambiguous(ID2);
+    if (ctx.code.includes(MARKER))
+      ctx.patched(ID2);
+  }
+}];
+
+// src/generic/patcher/ast-anchors2/index.mjs
+var ALL_VISITORS = Object.freeze([...visitors, ...visitors2, ...visitors3]);
+var BATCH2_ANCHOR_IDS = Object.freeze(ALL_VISITORS.map((visitor) => visitor.id));
+if (new Set(BATCH2_ANCHOR_IDS).size !== BATCH2_ANCHOR_IDS.length) {
+  throw new Error("Duplicate batch2 AST anchor ID");
+}
+function buildParents2(tree) {
+  const parents = new Map;
+  walk(tree, (node) => {
+    for (const value of Object.values(node)) {
+      if (value?.type)
+        parents.set(value, node);
+      else if (Array.isArray(value)) {
+        for (const child of value)
+          if (child?.type)
+            parents.set(child, node);
+      }
+    }
+  });
+  return parents;
+}
+function scanBatch2Anchors(code, { tree = parsePatchSource(code), ids = BATCH2_ANCHOR_IDS } = {}) {
+  const selected = new Set(ids);
+  const active = ALL_VISITORS.filter((visitor) => selected.has(visitor.id));
+  const results = Object.fromEntries(active.map((visitor) => [
+    visitor.id,
+    { matches: [], present: false, patched: false, ambiguous: false }
+  ]));
+  const parents = buildParents2(tree);
+  const context = {
+    code,
+    results,
+    parents,
+    edit(id, node, replacement) {
+      results[id].matches.push({ start: node.start, end: node.end, replacement });
+    },
+    present(id) {
+      results[id].present = true;
+    },
+    patched(id) {
+      results[id].patched = true;
+    },
+    ambiguous(id) {
+      results[id].ambiguous = true;
+    }
+  };
+  walk(tree, (node) => {
+    for (const visitor of active)
+      visitor.visit?.(node, context);
+  });
+  for (const visitor of active)
+    visitor.finalize?.(context);
+  return results;
+}
+
 // src/generic/patcher/semantic-runner.mjs
 var MODULE_SEPARATOR = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
@@ -23293,15 +23827,17 @@ class SourceCompatibilityError extends Error {
 }
 function applySemanticPatches(source, descriptors, { dryRun = false, verify = false } = {}) {
   const modules = source.split(MODULE_SEPARATOR);
-  const anchorIds = new Set(descriptors.map((descriptor) => descriptor.semanticId).filter((id) => id && ANCHOR_PATCH_IDS.includes(id)));
+  const anchorIds = new Set(descriptors.map((descriptor) => descriptor.semanticId).filter((id) => id && (ANCHOR_PATCH_IDS.includes(id) || BATCH2_ANCHOR_IDS.includes(id))));
   const scans = [];
   for (let index = 0;index < modules.length; index++) {
     try {
       const tree = parsePatchSource(modules[index]);
       const anchors = anchorIds.size ? scanAstAnchors(modules[index], { tree, ids: anchorIds }) : {};
+      const anchors2 = anchorIds.size ? scanBatch2Anchors(modules[index], { tree, ids: anchorIds }) : {};
       scans.push({
         ...scanAstPatches(modules[index], { tree }),
-        ...anchors
+        ...anchors,
+        ...anchors2
       });
     } catch (error) {
       if (error?.name === "SyntaxError") {
@@ -23314,7 +23850,7 @@ function applySemanticPatches(source, descriptors, { dryRun = false, verify = fa
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {
     const id = descriptor.semanticId;
-    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id)) {
+    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id) && !BATCH2_ANCHOR_IDS.includes(id)) {
       throw new Error(`Unknown semantic patch: ${id}`);
     }
     const matches = scans.flatMap((scan) => scan[id].matches);
@@ -23469,18 +24005,6 @@ async function applyContextLimitPatch(source, { dryRun, verify, rootDir }) {
   }
   return { status: "applied", count: replacements.length, code: next };
 }
-function terminalReplyDelay(querier, reader, now) {
-  const parse = reader?.parse;
-  if (parse?.mode !== "NORMAL" || typeof parse.incomplete !== "string")
-    return 0;
-  if (!/^\x1b(?:\[(?:\?[\d;]*)?)?$/.test(parse.incomplete))
-    return 0;
-  if (!Array.isArray(querier?.queue) || !querier.queue.some((entry) => entry?.kind === "barrier" || entry?.kind === "sentinel" && entry.written !== false))
-    return 0;
-  if (!Number.isFinite(now) || !Number.isFinite(reader.lastInputAt))
-    return 0;
-  return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
-}
 var patches = [
   {
     order: 1,
@@ -23532,6 +24056,7 @@ var patches = [
   {
     order: 90,
     id: "terminal-reply-fragments",
+    semanticId: "terminal-reply-ast",
     name: "Preserve split terminal replies while a DA1 probe is pending",
     pattern: /(flushIncomplete=\(\)=>\{if\(this\.incompleteEscapeTimer=null,![\w$]+\(this\.keyReader\)\)return;if\(this\.props\.stdin\.readableLength>0\)\{this\.incompleteEscapeTimer=setTimeout\(this\.flushIncomplete,[\w$]+\);return\}let ([\w$]+)=performance\.now\(\);)(this\.applyKeysRead\([\w$]+\(this\.keyReader,\2\),\2\)\})/g,
     replacer: (match, prefix, now, suffix) => prefix + `/*__clawgod_terminal_reply_fragments__*/const _clawgodReplyDelay=(${terminalReplyDelay.toString()})(this.querier,this.keyReader,${now});` + "if(_clawgodReplyDelay>0){this.incompleteEscapeTimer=setTimeout(this.flushIncomplete,_clawgodReplyDelay);return}" + suffix,
@@ -23593,6 +24118,7 @@ async function applyBuiltinHooksPatch(source, { dryRun, verify }) {
 var customPatches = [{
   order: 61,
   name: "Context limit configurable",
+  semanticId: "context-limit-ast",
   apply: applyContextLimitPatch
 }, {
   order: 64,
@@ -24289,6 +24815,7 @@ var agentTeamsPatch = {
 var sessionMetadataPatch = {
   order: 6,
   name: "Agents view session metadata",
+  semanticId: "agents-session-metadata-ast",
   pattern: /function ([\w$]+)\(([\w$]+)\)\{for\(let ([\w$]+)=0;\3<\2\.length;\3\+\+\)\{let ([\w$]+)=\2\[\3\];if\((\4==="--debug"\|\|\4==="-d"\|\|\4==="--debug-to-stderr"\|\|\4==="-d2e"\|\|\4\.startsWith\("--debug="\)\|\|\4\.startsWith\("--debug-file="\))\)continue;if\(\4==="--debug-file"&&\3\+1<\2\.length\)\{\3\+\+;continue\}return!1\}return!0\}/g,
   replacer: (match, fn, args, index, argument, debugFlags) => `function ${fn}(${args}){for(let ${index}=0;${index}<${args}.length;${index}++){let ${argument}=${args}[${index}];if(${debugFlags})continue;if(${argument}==="--debug-file"&&${index}+1<${args}.length){${index}++;continue}if(${argument}==="--session-id"/*__clawgod_agents_session_id__*/&&${index}+1<${args}.length){${index}++;continue}return!1}return!0}`,
   appliedMarker: "/*__clawgod_agents_session_id__*/",
@@ -24713,6 +25240,7 @@ var patches4 = [
   {
     order: 13,
     name: "Claude in Chrome agents config state",
+    semanticId: "chrome-agents-config-ast",
     pattern: /([\w$]+)=\{addDir:\[\],pluginDir:\[\],pluginDirNoMcp:\[\],settings:void 0,mcpConfig:\[\],strictMcpConfig:!1/g,
     replacer: (match, config) => `${config}={addDir:[],pluginDir:[],pluginDirNoMcp:[],settings:void 0,mcpConfig:[],strictMcpConfig:!1,chrome:!1,noChrome:!1`,
     appliedMarker: /strictMcpConfig:!1,chrome:!1,noChrome:!1/,

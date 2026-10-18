@@ -13,6 +13,7 @@ const agentTeamsPatch = {
 const sessionMetadataPatch = {
   order: 6,
   name: 'Agents view session metadata',
+  semanticId: 'agents-session-metadata-ast',
   pattern: /function ([\w$]+)\(([\w$]+)\)\{for\(let ([\w$]+)=0;\3<\2\.length;\3\+\+\)\{let ([\w$]+)=\2\[\3\];if\((\4==="--debug"\|\|\4==="-d"\|\|\4==="--debug-to-stderr"\|\|\4==="-d2e"\|\|\4\.startsWith\("--debug="\)\|\|\4\.startsWith\("--debug-file="\))\)continue;if\(\4==="--debug-file"&&\3\+1<\2\.length\)\{\3\+\+;continue\}return!1\}return!0\}/g,
   replacer: (match, fn, args, index, argument, debugFlags) =>
     `function ${fn}(${args}){for(let ${index}=0;${index}<${args}.length;${index}++){let ${argument}=${args}[${index}];if(${debugFlags})continue;if(${argument}==="--debug-file"&&${index}+1<${args}.length){${index}++;continue}if(${argument}==="--session-id"/*__clawgod_agents_session_id__*/&&${index}+1<${args}.length){${index}++;continue}return!1}return!0}`,
