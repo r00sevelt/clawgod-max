@@ -82,3 +82,11 @@
 - **提交**：`37710d1`（main）；云端 Compat Daily run `39062348739` 三 job 全绿。
 - **首发**：tag **`v0.2.0`**（仅推此 tag，本地 96 个上游 tag 一律未推）；Release run `39062966739` success；4 个核心资产已上传（install.sh / install.ps1 / 两个 chrome-fix），版本注入 `0.2.0` 校验通过；release notes 已替换为中文手写版；Build clawgod-import（run `39062966635`）并行构建 5 平台导入工具。
 
+
+## 2026-10-19：fail-open 全覆盖（第 1 项：AST 源解析）
+
+- **缺口**：patcher 初次 AST 扫描遇到上游源码解析失败（acorn SyntaxError）时直接 `exit 1`，即使带 `--allow-compatibility-fallback` 也不返回 42；上游形状漂移会回滚而不是安装 clean runtime。
+- **实现**：`semantic-runner.mjs` 新增 `SourceCompatibilityError`；初次 `scanAstPatches` 的 SyntaxError 归类为兼容失败；编辑后 `parsePatchSource(patched)` 的 SyntaxError 仍为 fatal。`entry.mjs` 捕获该错误 → `failed++`、跳过后续 regex/custom patch 循环；带 `--allow-compatibility-fallback` 返回 42，否则 1；不写 bundle、不建 `.bak`。
+- **测试**：`tests/patcher-compatibility-fallback.mjs` 新增 unparseable source 三用例（strict=1 / fallback=42 / dry-run+fallback=1），断言目标与 chunks 不变、无 `.bak`。
+- **验证**：`patcher-compatibility-fallback`、`patcher-semantic-failures`、`patcher-semantic-scanner`、`patcher-semantic` 全绿；`bun build.mjs` 重建 dist 且 `--check` 通过。Windows 全量 `tests/*.mjs` 的 18 项失败均为既有 POSIX/环境限制（0600 模式、/bin/bash、shell launcher、mkdtemp 引号、ENOTDIR、信号传播），与本改动无关；云端 CI 待跑。
+- **状态**：随本次提交推送；云端 Compat Daily 复核中（本地不再跑测试）。

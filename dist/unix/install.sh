@@ -22876,9 +22876,26 @@ function applyAstEdits(code, edits) {
 var MODULE_SEPARATOR = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
+
+class SourceCompatibilityError extends Error {
+  constructor(message, options) {
+    super(message, options);
+    this.name = "SourceCompatibilityError";
+  }
+}
 function applySemanticPatches(source, descriptors, { dryRun = false, verify = false } = {}) {
   const modules = source.split(MODULE_SEPARATOR);
-  const scans = modules.map(scanAstPatches);
+  const scans = [];
+  for (let index = 0;index < modules.length; index++) {
+    try {
+      scans.push(scanAstPatches(modules[index]));
+    } catch (error) {
+      if (error?.name === "SyntaxError") {
+        throw new SourceCompatibilityError(`upstream bundle is not parseable (module ${index}): ${error.message}`, { cause: error });
+      }
+      throw error;
+    }
+  }
   const results = new Map;
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {
@@ -24948,6 +24965,7 @@ ${"\u2550".repeat(55)}`);
   let failed = 0;
   let warnings = 0;
   const tolerated = [];
+  let semanticCompatibilityFailure = false;
   const stale = (name, detail) => {
     console.log(`  ${tolerateStale ? "WARNING" : "FAILED"} ${name} \u2014 ${detail}${tolerateStale ? " (tolerated)" : ""}`);
     if (tolerateStale)
@@ -24973,10 +24991,18 @@ ${"\u2550".repeat(55)}`);
         skipped++;
     }
   } catch (error) {
-    console.error(`AST scan/rewrite failed: ${error.message}. Source files were not changed.`);
-    process.exit(1);
+    if (error instanceof SourceCompatibilityError) {
+      console.log(`  FAILED AST source scan \u2014 ${error.message}`);
+      failed++;
+      semanticCompatibilityFailure = true;
+    } else {
+      console.error(`AST scan/rewrite failed: ${error.message}. Source files were not changed.`);
+      process.exit(1);
+    }
   }
   for (const patch of patches.filter((descriptor) => !descriptor.semanticId)) {
+    if (semanticCompatibilityFailure)
+      break;
     const matches = [...code.matchAll(patch.pattern)];
     let relevant = matches;
     if (patch.validate) {
@@ -25039,6 +25065,8 @@ ${"\u2550".repeat(55)}`);
     }
   }
   for (const descriptor of customPatches.filter((descriptor) => !descriptor.semanticId)) {
+    if (semanticCompatibilityFailure)
+      break;
     const result = await descriptor.apply(code, { dryRun, verify, rootDir });
     if (result.status === "applied") {
       if (!dryRun)

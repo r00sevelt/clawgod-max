@@ -2,9 +2,26 @@ import { AST_PATCH_IDS, applyAstEdits, parsePatchSource, scanAstPatches } from '
 
 export const MODULE_SEPARATOR = '\n/*__CLAWGOD_MODULE_BOUNDARY__*/\n';
 
+export class SourceCompatibilityError extends Error {
+  constructor(message, options) {
+    super(message, options);
+    this.name = 'SourceCompatibilityError';
+  }
+}
+
 export function applySemanticPatches(source, descriptors, { dryRun = false, verify = false } = {}) {
   const modules = source.split(MODULE_SEPARATOR);
-  const scans = modules.map(scanAstPatches);
+  const scans = [];
+  for (let index = 0; index < modules.length; index++) {
+    try {
+      scans.push(scanAstPatches(modules[index]));
+    } catch (error) {
+      if (error?.name === 'SyntaxError') {
+        throw new SourceCompatibilityError(`upstream bundle is not parseable (module ${index}): ${error.message}`, { cause: error });
+      }
+      throw error;
+    }
+  }
   const results = new Map();
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {

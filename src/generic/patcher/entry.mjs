@@ -13,7 +13,7 @@ import {
 } from '../enhancement-config.mjs';
 import { inspectPatcherSource } from './core.mjs';
 import { createPatchSelection, enhancementManifest } from './registry.mjs';
-import { applySemanticPatches } from './semantic-runner.mjs';
+import { applySemanticPatches, SourceCompatibilityError } from './semantic-runner.mjs';
 
 export const PATCH_COMPATIBILITY_EXIT_CODE = 42;
 
@@ -143,6 +143,7 @@ export async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.s
   let failed = 0;
   let warnings = 0;
   const tolerated = [];
+  let semanticCompatibilityFailure = false;
   const stale = (name, detail) => {
     console.log(`  ${tolerateStale ? 'WARNING' : 'FAILED'} ${name} — ${detail}${tolerateStale ? ' (tolerated)' : ''}`);
     if (tolerateStale) tolerated.push(name);
@@ -164,11 +165,18 @@ export async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.s
       } else skipped++;
     }
   } catch (error) {
-    console.error(`AST scan/rewrite failed: ${error.message}. Source files were not changed.`);
-    process.exit(1);
+    if (error instanceof SourceCompatibilityError) {
+      console.log(`  FAILED AST source scan — ${error.message}`);
+      failed++;
+      semanticCompatibilityFailure = true;
+    } else {
+      console.error(`AST scan/rewrite failed: ${error.message}. Source files were not changed.`);
+      process.exit(1);
+    }
   }
 
   for (const patch of patches.filter(descriptor => !descriptor.semanticId)) {
+    if (semanticCompatibilityFailure) break;
     const matches = [...code.matchAll(patch.pattern)];
     let relevant = matches;
 
@@ -238,6 +246,7 @@ export async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.s
   }
 
   for (const descriptor of customPatches.filter(descriptor => !descriptor.semanticId)) {
+    if (semanticCompatibilityFailure) break;
     const result = await descriptor.apply(code, { dryRun, verify, rootDir });
     if (result.status === 'applied') {
       if (!dryRun) code = result.code;

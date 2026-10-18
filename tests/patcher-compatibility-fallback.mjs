@@ -8,6 +8,7 @@ import { getPatcherSources, seedPatcherAcorn } from './patcher-test-sources.mjs'
 
 const staleResolver = 'function WE(){return Bun.isStandaloneExecutable===!0}function W1t(){if(WE())return{cmd:process.execPath,prefixArgs:[]};let t=process.argv[1];if(!t)return{cmd:process.execPath,prefixArgs:[]};return{cmd:process.execPath,prefixArgs:[t],env:{}}}';
 const chunkSource = 'const chunkMustRemainByteIdentical = true;\n';
+const unparseableSource = 'function broken( {';
 
 function createFixture(patcherSource, label, { targetSource = staleResolver, configSource } = {}) {
   const root = mkdtempSync(join(tmpdir(), `clawgod-patcher-compatibility-${label}-`));
@@ -58,6 +59,25 @@ for (const [name, patcherSource] of await getPatcherSources()) {
       assert.equal(readFileSync(join(fixture.chunks, 'chunk.js'), 'utf8'), chunkSource);
       assert.equal(existsSync(`${fixture.target}.bak`), false);
       assert.equal(existsSync(join(fixture.root, 'chunks.bak')), false);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  }
+
+  for (const { args, expected } of [
+    { args: [], expected: 1 },
+    { args: ['--allow-compatibility-fallback'], expected: 42 },
+    { args: ['--dry-run', '--allow-compatibility-fallback'], expected: 1 },
+  ]) {
+    const fixture = createFixture(patcherSource, `${name}-unparseable-${args.join('-') || 'strict'}`, { targetSource: unparseableSource });
+    try {
+      const { run, output } = runPatcher(fixture, args);
+      assert.equal(run.status, expected, `${name} unparseable ${args.join(' ') || 'strict'}: ${output}`);
+      assert.match(output, /FAILED AST source scan|not parseable/);
+      assert.equal(readFileSync(fixture.target, 'utf8'), unparseableSource);
+      assert.equal(existsSync(`${fixture.target}.bak`), false);
+      assert.equal(existsSync(join(fixture.root, 'chunks.bak')), false);
+      assert.equal(readFileSync(join(fixture.chunks, 'chunk.js'), 'utf8'), chunkSource);
     } finally {
       rmSync(fixture.root, { recursive: true, force: true });
     }
