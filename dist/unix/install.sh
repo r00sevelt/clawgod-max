@@ -23493,7 +23493,7 @@ var visitors = [
         ctx.patched(CONTEXT_LIMIT_ID);
         if (registration)
           ctx.edit(CONTEXT_LIMIT_ID, { type: "Insertion", start: declaration.end, end: declaration.end }, registration);
-      } else if (declaration?.near || state.marker || code.includes("200000")) {
+      } else if (declaration?.near || state.marker) {
         ctx.present(CONTEXT_LIMIT_ID);
       }
       if (state.patchedComparison)
@@ -23855,9 +23855,12 @@ function applySemanticPatches(source, descriptors, { dryRun = false, verify = fa
     }
     const matches = scans.flatMap((scan) => scan[id].matches);
     const present = scans.some((scan) => scan[id].present);
+    const patched = scans.some((scan) => scan[id].patched);
+    const staleFallback = id === "context-limit-ast" && matches.length === 0 && !patched && source.includes("200000");
+    const stale = id === "context-limit-ast" ? matches.length === 0 && !patched && (present || staleFallback) : present;
     if (scans.some((scan) => scan[id].ambiguous) || id === "remote-settings-off" && matches.length > 1) {
       results.set(descriptor, { status: "failed", detail: `ambiguous AST patch sites: ${id}` });
-    } else if (present) {
+    } else if (stale) {
       results.set(descriptor, { status: "stale", detail: `AST matcher stale: ${id}` });
     } else if (matches.length) {
       results.set(descriptor, { status: verify ? "verify" : "applied", count: matches.length });

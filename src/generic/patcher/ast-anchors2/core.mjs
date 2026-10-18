@@ -219,9 +219,7 @@ export const visitors = [
         // The custom patch inserts the refresh registration before the `;`.
         if (registration) ctx.edit(CONTEXT_LIMIT_ID,
           { type: 'Insertion', start: declaration.end, end: declaration.end }, registration);
-      } else if (declaration?.near || state.marker || code.includes('200000')) {
-        // Mirror applyContextLimitPatch: any 200000 without a recognized
-        // declaration is a stale recognizer, not a missing feature.
+      } else if (declaration?.near || state.marker) {
         ctx.present(CONTEXT_LIMIT_ID);
       }
       if (state.patchedComparison) ctx.patched(CONTEXT_LIMIT_ID);
