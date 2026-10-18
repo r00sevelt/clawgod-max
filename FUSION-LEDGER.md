@@ -98,3 +98,10 @@
 - **兼容**：已保存 `mode:"all"` 的旧配置继续全开；缺失配置的新装/更新走 standard；`custom` 选择不受影响。
 - **测试**：增强配置引擎、安装器选择、E2E 期望、patcher 注册表断言同步更新；本地不跑测试，全部交云端 CI。
 - **状态**：已推送；云端 Compat Daily run `39150901066` 三 job 全绿（Linux/macOS/Windows）。真实安装器 E2E 确认 `mode=standard`、20 enabled/1 disabled、0 failed；subset/core-only 契约不变。期间修正 4 处测试侧旧断言（README_JP 标记、E2E 契约、PowerShell 菜单头、patcher-semantic 显式 all 配置）。
+
+## 2026-10-19：锚点 AST 化（第 1 批：agents / planning / auto-mode）
+
+- **基础设施**：新增 `src/generic/patcher/ast-anchors.mjs`（`ANCHOR_PATCH_IDS` + `scanAstAnchors`）；`semantic.mjs` 导出 walk/helper 并接受预解析 tree；`semantic-runner.mjs` 每模块只 parse 一次，按已选锚点 ID 只跑对应 matcher；`entry.mjs` 语义批按 order 排序，`stale + optional` 沿用 regex 的 skip 语义。
+- **第一批转换**：`agents#5`（Agent Teams：env/member + `tengu_amber_flint` 结构）、`planning#22`（Ultrareview：按 `tengu_review_bughunter_config` 字面量绑定 getter，去掉 `var ulu=` 压缩名 sentinel）、`auto-mode#26/#27`（firstParty/anthropicAws 与模型 ID 结构，去掉 300 字 lookahead 与 `claude-*-4-6` 写死）。描述符保留原 regex 字段，供 Task 5 快照和 runtime-features 直测；运行时由 AST matcher 接管。
+- **测试**：新增 `tests/patcher-ast-anchors.mjs`（正/负样本、字符串诱饵、漂移 present、幂等）；`installer-build` 源文件清单加入 `ast-anchors.mjs`；2.1.215 字节 hash、registry、runtime-features 作为回归。
+- **状态**：本地构建通过；待推送云端 CI。

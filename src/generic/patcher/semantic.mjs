@@ -8,11 +8,11 @@ export const AST_PATCH_IDS = [
 ];
 
 const gate = id => `globalThis.__clawgodPatches?.[${JSON.stringify(id)}]!==!1`;
-const literal = (node, value) => node?.type === 'Literal' && node.value === value;
-const propertyName = node => node.computed
+export const literal = (node, value) => node?.type === 'Literal' && node.value === value;
+export const propertyName = node => node.computed
   ? (node.key?.type === 'Literal' ? node.key.value : undefined)
   : (node.key?.name ?? node.key?.value);
-const member = (node, name) => node?.type === 'MemberExpression' &&
+export const member = (node, name) => node?.type === 'MemberExpression' &&
   (node.computed ? literal(node.property, name) : node.property.name === name);
 const thisMember = (node, name) => member(node, name) && node.object.type === 'ThisExpression';
 const boolean = (node, value) => literal(node, value) ||
@@ -26,7 +26,7 @@ export const parsePatchSource = code => parse(code, {
 });
 
 // 迭代遍历，避免大型 bundle 额外耗尽调用栈。
-function walk(root, visit) {
+export function walk(root, visit) {
   const pending = [root];
   while (pending.length) {
     const node = pending.pop();
@@ -40,7 +40,7 @@ function walk(root, visit) {
   }
 }
 
-function hasGate(node, id) {
+export function hasGate(node, id) {
   let found = false;
   walk(node, child => {
     if (member(child, id) && member(child.object, '__clawgodPatches') &&
@@ -60,9 +60,8 @@ function hasRemoteSettingsContext(node) {
 }
 
 // 每个模块仅解析一次并只保留编辑区间，进入下一 chunk 前可释放大型 AST。
-export function scanAstPatches(code) {
+export function scanAstPatches(code, { tree = parsePatchSource(code) } = {}) {
   const results = Object.fromEntries(AST_PATCH_IDS.map(id => [id, { matches: [], present: false, patched: false }]));
-  const tree = parsePatchSource(code);
   const edit = (id, node, replacement) => {
     results[id].matches.push({ start: node.start, end: node.end, replacement });
   };

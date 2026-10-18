@@ -861,6 +861,7 @@ try {
     'src/generic/patcher/core.mjs',
     'src/generic/patcher/semantic.mjs',
     'src/generic/patcher/semantic-runner.mjs',
+    'src/generic/patcher/ast-anchors.mjs',
     'src/generic/patcher/vendor/acorn.cjs',
     'src/generic/patcher/registry.mjs',
     'src/generic/patcher/enhancements/cometix.mjs',

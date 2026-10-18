@@ -22725,6 +22725,61 @@ async function readEnhancementConfig({
 // src/generic/patcher/core.mjs
 var import_acorn2 = __toESM(require_acorn(), 1);
 
+// src/generic/patcher/runtime-features.mjs
+var gate = (patchId) => `globalThis.__clawgodPatches?.[${JSON.stringify(patchId)}]!==!1`;
+var runtimeFeatureMetadata = Object.freeze({
+  "classifier-fail-open": ["classifier-fail-open"],
+  "cleanup-period": ["cleanup-period"],
+  "disable-collapse-read-search": ["disable-collapse-read-search"],
+  "enable-keybindings": ["enable-keybindings"],
+  "file-read-limit": ["file-read-limit"],
+  "transcript-dialog-replay": ["transcript-dialog-replay"],
+  "unlock-ultracode": ["unlock-ultracode"],
+  "chrome-local-socket": ["chrome-local-socket"],
+  "context-limit": ["context-limit"],
+  "computer-use": ["computer-use"],
+  "enable-voice-mode": ["voice-mode"],
+  "voice-asr-backend": ["voice-asr-backend"],
+  "agent-teams": ["agent-teams"],
+  "computer-use-sub": ["computer-use"],
+  "computer-use-default": ["computer-use"],
+  "computer-use-gate": ["computer-use"],
+  ultraplan: ["ultraplan"],
+  "ultrareview-gate": ["ultrareview"],
+  "ultrareview-direct": ["ultrareview"],
+  "voice-mode": ["voice-mode"],
+  "voice-hold-input": ["voice-mode"],
+  "auto-mode-helper-gate": ["auto-mode"],
+  "auto-mode-inline-gate": ["auto-mode"],
+  "auto-mode-provider-opt-in": ["auto-mode"],
+  "classifier-timeout": ["classifier-tuning"],
+  "classifier-model": ["classifier-tuning"],
+  "classifier-retries": ["classifier-tuning"],
+  "theme-logo-rgb": ["theme"],
+  "theme-logo-ansi": ["theme"],
+  "theme-claude-rgb-dark": ["theme"],
+  "theme-claude-rgb-light": ["theme"],
+  "theme-shimmer-rgb": ["theme"],
+  "theme-shimmer-rgb-light": ["theme"],
+  "theme-hex": ["theme"],
+  "theme-claude-ansi": ["theme"],
+  "theme-shimmer-ansi": ["theme"],
+  "theme-brief-rgb-dark": ["theme"],
+  "theme-brief-rgb-light": ["theme"],
+  "theme-brief-ansi": ["theme"],
+  "remote-settings-off": ["remote-settings"],
+  "geo-stego-date": ["geo-neutralize"],
+  "geo-detect-probe": ["geo-neutralize"],
+  "geo-apostrophe-stego": ["geo-neutralize"],
+  "remove-cyber-risk": ["cyber-risk"],
+  "remove-url-restriction": ["url-restriction"],
+  "remove-cautious-actions": ["cautious-actions"],
+  "remove-not-logged-in": ["not-logged-in"],
+  "attachment-filter-bypass": ["message-filter"],
+  "message-filter-legacy": ["message-filter"],
+  "message-filter-s8": ["message-filter"]
+});
+
 // src/generic/patcher/semantic.mjs
 var import_acorn = __toESM(require_acorn(), 1);
 var { parse } = import_acorn.default;
@@ -22737,7 +22792,7 @@ var AST_PATCH_IDS = [
   "geo-stego-date",
   "remote-settings-off"
 ];
-var gate = (id) => `globalThis.__clawgodPatches?.[${JSON.stringify(id)}]!==!1`;
+var gate2 = (id) => `globalThis.__clawgodPatches?.[${JSON.stringify(id)}]!==!1`;
 var literal = (node, value) => node?.type === "Literal" && node.value === value;
 var propertyName = (node) => node.computed ? node.key?.type === "Literal" ? node.key.value : undefined : node.key?.name ?? node.key?.value;
 var member = (node, name) => node?.type === "MemberExpression" && (node.computed ? literal(node.property, name) : node.property.name === name);
@@ -22784,9 +22839,8 @@ function hasRemoteSettingsContext(node) {
   });
   return found;
 }
-function scanAstPatches(code) {
+function scanAstPatches(code, { tree = parsePatchSource(code) } = {}) {
   const results = Object.fromEntries(AST_PATCH_IDS.map((id) => [id, { matches: [], present: false, patched: false }]));
-  const tree = parsePatchSource(code);
   const edit = (id, node, replacement) => {
     results[id].matches.push({ start: node.start, end: node.end, replacement });
   };
@@ -22798,7 +22852,7 @@ function scanAstPatches(code) {
     const body = fn.body;
     const original = code.slice(body.start, body.end);
     if (body.type !== "BlockStatement") {
-      edit(id, body, `(${gate(id)}?${value}:(${original}))`);
+      edit(id, body, `(${gate2(id)}?${value}:(${original}))`);
       return;
     }
     let insertion = body.start + 1;
@@ -22808,7 +22862,7 @@ function scanAstPatches(code) {
       insertion = statement.end;
     }
     const offset = insertion - body.start;
-    edit(id, body, `${original.slice(0, offset)};if(${gate(id)})return ${value};${original.slice(offset)}`);
+    edit(id, body, `${original.slice(0, offset)};if(${gate2(id)})return ${value};${original.slice(offset)}`);
   };
   const functions = new Map;
   for (const node of tree.body) {
@@ -22833,7 +22887,7 @@ function scanAstPatches(code) {
           const availability = named("availability");
           if (!patched && results.ultraplan.matches.some((match) => match.start === enabled[0].value.body?.start) && availability.length === 1 && availability[0].kind === "init") {
             const value = availability[0].value;
-            edit("ultraplan", value, `(${gate("ultraplan")}?undefined:(${code.slice(value.start, value.end)}))`);
+            edit("ultraplan", value, `(${gate2("ultraplan")}?undefined:(${code.slice(value.start, value.end)}))`);
           }
         }
         if (!patched && results.ultraplan.matches.length === before)
@@ -22841,7 +22895,7 @@ function scanAstPatches(code) {
       }
       const enabled = named("enabled");
       if (named("pixelValidation").length === 1 && enabled.length === 1 && enabled[0].kind === "init" && boolean(enabled[0].value, false) && !props.some((p) => p.type === "SpreadElement" || p.computed && p.key.type !== "Literal")) {
-        edit("computer-use-default", enabled[0].value, `(${gate("computer-use-default")}?!0:(${code.slice(enabled[0].value.start, enabled[0].value.end)}))`);
+        edit("computer-use-default", enabled[0].value, `(${gate2("computer-use-default")}?!0:(${code.slice(enabled[0].value.start, enabled[0].value.end)}))`);
       }
     }
     if (node.type === "FunctionDeclaration" && node.params.length === 1 && node.params[0].type === "Identifier" && !node.async && !node.generator) {
@@ -22870,7 +22924,7 @@ function scanAstPatches(code) {
       if (literal(value, "external"))
         edit("user-type-ant", value, '"ant"');
       if (value?.type === "UnaryExpression" && value.operator === "!" && value.argument.type === "CallExpression" && value.argument.callee.type === "Identifier" && value.argument.arguments.length === 2 && literal(value.argument.arguments[0], "tengu_amber_quartz_disabled") && boolean(value.argument.arguments[1], false)) {
-        edit("voice-mode", value, `(${gate("voice-mode")}?!0:(${code.slice(value.start, value.end)}))`);
+        edit("voice-mode", value, `(${gate2("voice-mode")}?!0:(${code.slice(value.start, value.end)}))`);
       }
     }
     if (node.type === "FunctionDeclaration" && tree.body.includes(node) && node.params.length === 0 && !node.async && !node.generator) {
@@ -22932,6 +22986,298 @@ function applyAstEdits(code, edits) {
   return parts.join("");
 }
 
+// src/generic/patcher/ast-anchors.mjs
+var ANCHOR_PATCH_IDS = Object.freeze([
+  "auto-mode-helper-gate",
+  "auto-mode-inline-gate",
+  "ultrareview-v215",
+  "agent-teams"
+]);
+var FUNCTION_TYPES = new Set(["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"]);
+var isFunction = (node) => FUNCTION_TYPES.has(node?.type);
+var isIdentifier = (node) => node?.type === "Identifier";
+var isCall = (node) => node?.type === "CallExpression";
+var isString = (node) => node?.type === "Literal" && typeof node.value === "string";
+var isTrue = (node) => literal(node, true) || node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 0);
+var isFalse = (node) => literal(node, false) || node?.type === "UnaryExpression" && node.operator === "!" && literal(node.argument, 1);
+var returnsFalse = (node) => node?.type === "IfStatement" && node.consequent?.type === "ReturnStatement" && isFalse(node.consequent.argument);
+var singleReturn = (node) => node?.body?.type === "BlockStatement" && node.body.body.length === 1 && node.body.body[0].type === "ReturnStatement" ? node.body.body[0] : null;
+function containsString(node, value) {
+  let found = false;
+  walk(node, (child) => {
+    if (isString(child) && child.value === value)
+      found = true;
+  });
+  return found;
+}
+function containsStringMatching(node, pattern) {
+  let found = false;
+  walk(node, (child) => {
+    if (isString(child) && pattern.test(child.value))
+      found = true;
+  });
+  return found;
+}
+function buildParents(tree) {
+  const parents = new Map;
+  walk(tree, (node) => {
+    for (const value of Object.values(node)) {
+      if (value?.type)
+        parents.set(value, node);
+      else if (Array.isArray(value)) {
+        for (const child of value)
+          if (child?.type)
+            parents.set(child, node);
+      }
+    }
+  });
+  return parents;
+}
+function enclosingFunction(node, parents) {
+  let current = parents.get(node);
+  while (current) {
+    if (isFunction(current))
+      return current;
+    current = parents.get(current);
+  }
+  return null;
+}
+function walkWithinFunction(root, visit) {
+  const pending = [root];
+  while (pending.length) {
+    const node = pending.pop();
+    visit(node);
+    for (const value of Object.values(node)) {
+      if (value?.type) {
+        if (value !== root && isFunction(value))
+          continue;
+        pending.push(value);
+      } else if (Array.isArray(value)) {
+        for (const child of value) {
+          if (child?.type && (child === root || !isFunction(child)))
+            pending.push(child);
+        }
+      }
+    }
+  }
+}
+function edit(result, node, replacement) {
+  result.matches.push({ start: node.start, end: node.end, replacement });
+}
+function isProcessEnvAgentTeams(node) {
+  return node?.type === "MemberExpression" && member(node, "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") && node.object?.type === "MemberExpression" && member(node.object, "env") && node.object.object?.name === "process";
+}
+function isAgentTeamsEnvCall(node) {
+  return isCall(node) && node.arguments.length === 1 && isProcessEnvAgentTeams(node.arguments[0]);
+}
+function agentTeamsFirstTest(test) {
+  if (test?.type !== "LogicalExpression" || test.operator !== "&&")
+    return false;
+  const envCall = (node) => node?.type === "UnaryExpression" && node.operator === "!" && isAgentTeamsEnvCall(node.argument);
+  const memberFlag = (node) => node?.type === "UnaryExpression" && node.operator === "!" && node.argument?.type === "MemberExpression";
+  const localCall = (node) => node?.type === "UnaryExpression" && node.operator === "!" && isCall(node.argument) && node.argument.arguments.length === 0;
+  return envCall(test.left) && localCall(test.right) || memberFlag(test.left) && localCall(test.right);
+}
+function agentTeamsSecondTest(test) {
+  return test?.type === "UnaryExpression" && test.operator === "!" && isCall(test.argument) && test.argument.arguments.length === 2 && literal(test.argument.arguments[0], "tengu_amber_flint") && isTrue(test.argument.arguments[1]);
+}
+function autoModeHelperFirstParty(node, parents) {
+  const fn = enclosingFunction(node, parents);
+  if (!fn)
+    return false;
+  let found = false;
+  walkWithinFunction(fn, (child) => {
+    if (child.type === "BinaryExpression" && child.operator === "!==" && isIdentifier(child.left) && literal(child.right, "firstParty") && child.start > node.end && child.start - node.end <= 300)
+      found = true;
+  });
+  return found;
+}
+function autoModeInlineShapeA(test) {
+  if (test?.type !== "LogicalExpression" || test.operator !== "&&")
+    return false;
+  let firstParty = false;
+  let anthropicAws = false;
+  let negatedCall = false;
+  walk(test, (child) => {
+    if (child.type === "BinaryExpression" && child.operator === "!==" && isIdentifier(child.left) && literal(child.right, "firstParty"))
+      firstParty = true;
+    if (child.type === "BinaryExpression" && child.operator === "!==" && literal(child.right, "anthropicAws"))
+      anthropicAws = true;
+    if (child.type === "UnaryExpression" && child.operator === "!" && isCall(child.argument))
+      negatedCall = true;
+  });
+  return firstParty && (anthropicAws || negatedCall);
+}
+function autoModeInlineShapeB(test) {
+  if (test?.type !== "LogicalExpression" || test.operator !== "&&")
+    return false;
+  if (!isCall(test.left) || test.left.arguments.length !== 0)
+    return false;
+  if (test.right?.type !== "LogicalExpression" || test.right.operator !== "||")
+    return false;
+  let model = false;
+  let haiku = false;
+  walk(test.right, (child) => {
+    if (isString(child) && /^claude-(?:opus|sonnet|haiku)-/.test(child.value))
+      model = true;
+    if (isCall(child) && member(child.callee, "includes") && child.arguments.length === 1 && literal(child.arguments[0], "haiku"))
+      haiku = true;
+  });
+  return model || haiku;
+}
+function isUltrareviewGetter(arg, configName) {
+  return isCall(arg) && arg.arguments.length === 2 && isIdentifier(arg.arguments[0]) && arg.arguments[0].name === configName && literal(arg.arguments[1], null);
+}
+function getterCallName(node) {
+  const expression = node?.type === "ChainExpression" ? node.expression : node;
+  if (expression?.type !== "MemberExpression" || !member(expression, "enabled"))
+    return null;
+  const object = expression.object;
+  if (!isCall(object) || object.arguments.length !== 0 || !isIdentifier(object.callee))
+    return null;
+  return object.callee.name;
+}
+function isUltrareviewGateArg(arg, getterName) {
+  if (arg?.type !== "LogicalExpression" || arg.operator !== "&&")
+    return false;
+  if (arg.left?.type !== "BinaryExpression" || arg.left.operator !== "===" || !isTrue(arg.left.right))
+    return false;
+  if (getterCallName(arg.left.left) !== getterName)
+    return false;
+  return arg.right?.type === "LogicalExpression" && arg.right.operator === "&&" && isCall(arg.right.left) && arg.right.left.arguments.length === 0 && arg.right.right?.type === "UnaryExpression" && arg.right.right.operator === "!" && isCall(arg.right.right.argument) && arg.right.right.argument.arguments.length === 0;
+}
+function containsGetterCall(arg, getterName) {
+  if (!arg)
+    return false;
+  let found = false;
+  walk(arg, (child) => {
+    if (isCall(child) && isIdentifier(child.callee) && child.callee.name === getterName && child.arguments.length === 0)
+      found = true;
+  });
+  return found;
+}
+function initResults(ids) {
+  return Object.fromEntries(ids.map((id) => [
+    id,
+    { matches: [], present: false, patched: false, ambiguous: false }
+  ]));
+}
+function scanAstAnchors(code, { tree = parsePatchSource(code), ids = ANCHOR_PATCH_IDS } = {}) {
+  const selected = new Set(ids);
+  const active = ANCHOR_PATCH_IDS.filter((id) => selected.has(id));
+  const results = initResults(active);
+  const has = (id) => selected.has(id);
+  const parents = buildParents(tree);
+  const context = {
+    results,
+    getters: [],
+    configName: null,
+    saw: {}
+  };
+  if (has("ultrareview-v215"))
+    for (const node of tree.body) {
+      if (node.type === "VariableDeclaration") {
+        for (const declaration of node.declarations) {
+          if (isIdentifier(declaration.id) && literal(declaration.init, "tengu_review_bughunter_config")) {
+            context.configName = declaration.id.name;
+          }
+        }
+      }
+    }
+  if (context.configName) {
+    for (const node of tree.body) {
+      if (node.type !== "FunctionDeclaration" || !isIdentifier(node.id))
+        continue;
+      const ret = singleReturn(node);
+      if (ret && isUltrareviewGetter(ret.argument, context.configName)) {
+        context.getters.push({ node, name: node.id.name });
+      }
+    }
+  }
+  walk(tree, (node) => {
+    if (has("auto-mode-helper-gate") && returnsFalse(node)) {
+      const id = "auto-mode-helper-gate";
+      const result = results[id];
+      if (hasGate(node.test, id)) {
+        result.patched = true;
+      } else if (autoModeHelperFirstParty(node, parents)) {
+        context.saw[id] = true;
+        if (node.test?.type === "UnaryExpression" && node.test.operator === "!" && isCall(node.test.argument) && node.test.argument.arguments.length === 1 && isIdentifier(node.test.argument.arguments[0])) {
+          edit(result, node.test, `${gate(id)}===!1&&${code.slice(node.test.start, node.test.end)}`);
+        }
+      }
+    }
+    if (has("auto-mode-inline-gate") && returnsFalse(node)) {
+      const id = "auto-mode-inline-gate";
+      const result = results[id];
+      if (hasGate(node.test, id)) {
+        result.patched = true;
+      } else if (autoModeInlineShapeA(node.test) || autoModeInlineShapeB(node.test)) {
+        context.saw[id] = true;
+        edit(result, node.test, `${gate(id)}===!1&&${code.slice(node.test.start, node.test.end)}`);
+      } else if (containsString(node.test, "firstParty") || containsStringMatching(node.test, /^claude-(?:opus|sonnet|haiku)-/) || containsString(node.test, "haiku")) {
+        context.saw[id] = true;
+      }
+    }
+    if (has("agent-teams") && node.type === "FunctionDeclaration" && node.params.length === 0 && !node.async && !node.generator) {
+      if (hasGate(node, "agent-teams")) {
+        results["agent-teams"].patched = true;
+      } else {
+        const body = node.body;
+        if (body?.type === "BlockStatement") {
+          const [first, second, third] = body.body;
+          const flagMarker = second?.test ? containsString(second.test, "tengu_amber_flint") : false;
+          const envMarker = first?.test ? containsString(first.test, "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") : false;
+          if (flagMarker && envMarker)
+            context.saw["agent-teams"] = true;
+          if (body.body.length === 3 && returnsFalse(first) && returnsFalse(second) && third?.type === "ReturnStatement" && isTrue(third.argument) && agentTeamsFirstTest(first.test) && agentTeamsSecondTest(second.test)) {
+            context.saw["agent-teams"] = true;
+            edit(results["agent-teams"], body, `{if(${gate("agent-teams")})return!0;${code.slice(body.start + 1, body.end)}`);
+          }
+        }
+      }
+    }
+    if (has("ultrareview-v215") && node.type === "FunctionDeclaration" && context.configName && isIdentifier(node.id)) {
+      const id = "ultrareview-v215";
+      const result = results[id];
+      const ret = singleReturn(node);
+      if (ret) {
+        for (const getter of context.getters) {
+          if (node.start <= getter.node.end || node.start - getter.node.end > 1500)
+            continue;
+          if (isUltrareviewGateArg(ret.argument, getter.name)) {
+            context.saw[id] = true;
+            edit(result, ret.argument, `${gate(id)}?!0:(${code.slice(ret.argument.start, ret.argument.end)})`);
+          } else if (containsGetterCall(ret.argument, getter.name)) {
+            context.saw[id] = true;
+          }
+        }
+      }
+      if (hasGate(node, id) && context.getters.some((getter) => node.start > getter.node.end && node.start - getter.node.end <= 1500)) {
+        result.patched = true;
+      }
+    }
+  });
+  if (has("agent-teams")) {
+    const result = context.results["agent-teams"];
+    if (!result.patched && context.saw["agent-teams"] && result.matches.length === 0)
+      result.present = true;
+  }
+  for (const id of ["auto-mode-helper-gate", "auto-mode-inline-gate"]) {
+    if (!has(id))
+      continue;
+    const result = context.results[id];
+    if (!result.patched && context.saw[id] && result.matches.length === 0)
+      result.present = true;
+  }
+  if (has("ultrareview-v215")) {
+    const ultrareview = context.results["ultrareview-v215"];
+    if (!ultrareview.patched && context.configName && ultrareview.matches.length === 0)
+      ultrareview.present = true;
+  }
+  return results;
+}
+
 // src/generic/patcher/semantic-runner.mjs
 var MODULE_SEPARATOR = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
@@ -22945,10 +23291,16 @@ class SourceCompatibilityError extends Error {
 }
 function applySemanticPatches(source, descriptors, { dryRun = false, verify = false } = {}) {
   const modules = source.split(MODULE_SEPARATOR);
+  const anchorIds = new Set(descriptors.map((descriptor) => descriptor.semanticId).filter((id) => id && ANCHOR_PATCH_IDS.includes(id)));
   const scans = [];
   for (let index = 0;index < modules.length; index++) {
     try {
-      scans.push(scanAstPatches(modules[index]));
+      const tree = parsePatchSource(modules[index]);
+      const anchors = anchorIds.size ? scanAstAnchors(modules[index], { tree, ids: anchorIds }) : {};
+      scans.push({
+        ...scanAstPatches(modules[index], { tree }),
+        ...anchors
+      });
     } catch (error) {
       if (error?.name === "SyntaxError") {
         throw new SourceCompatibilityError(`upstream bundle is not parseable (module ${index}): ${error.message}`, { cause: error });
@@ -22960,8 +23312,9 @@ function applySemanticPatches(source, descriptors, { dryRun = false, verify = fa
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {
     const id = descriptor.semanticId;
-    if (!AST_PATCH_IDS.includes(id))
+    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id)) {
       throw new Error(`Unknown semantic patch: ${id}`);
+    }
     const matches = scans.flatMap((scan) => scan[id].matches);
     const present = scans.some((scan) => scan[id].present);
     if (scans.some((scan) => scan[id].ambiguous) || id === "remote-settings-off" && matches.length > 1) {
@@ -23284,61 +23637,6 @@ var enhancements_default = `[
   { "id": "superpowers", "kind": "plugin" }
 ]
 `;
-
-// src/generic/patcher/runtime-features.mjs
-var gate2 = (patchId) => `globalThis.__clawgodPatches?.[${JSON.stringify(patchId)}]!==!1`;
-var runtimeFeatureMetadata = Object.freeze({
-  "classifier-fail-open": ["classifier-fail-open"],
-  "cleanup-period": ["cleanup-period"],
-  "disable-collapse-read-search": ["disable-collapse-read-search"],
-  "enable-keybindings": ["enable-keybindings"],
-  "file-read-limit": ["file-read-limit"],
-  "transcript-dialog-replay": ["transcript-dialog-replay"],
-  "unlock-ultracode": ["unlock-ultracode"],
-  "chrome-local-socket": ["chrome-local-socket"],
-  "context-limit": ["context-limit"],
-  "computer-use": ["computer-use"],
-  "enable-voice-mode": ["voice-mode"],
-  "voice-asr-backend": ["voice-asr-backend"],
-  "agent-teams": ["agent-teams"],
-  "computer-use-sub": ["computer-use"],
-  "computer-use-default": ["computer-use"],
-  "computer-use-gate": ["computer-use"],
-  ultraplan: ["ultraplan"],
-  "ultrareview-gate": ["ultrareview"],
-  "ultrareview-direct": ["ultrareview"],
-  "voice-mode": ["voice-mode"],
-  "voice-hold-input": ["voice-mode"],
-  "auto-mode-helper-gate": ["auto-mode"],
-  "auto-mode-inline-gate": ["auto-mode"],
-  "auto-mode-provider-opt-in": ["auto-mode"],
-  "classifier-timeout": ["classifier-tuning"],
-  "classifier-model": ["classifier-tuning"],
-  "classifier-retries": ["classifier-tuning"],
-  "theme-logo-rgb": ["theme"],
-  "theme-logo-ansi": ["theme"],
-  "theme-claude-rgb-dark": ["theme"],
-  "theme-claude-rgb-light": ["theme"],
-  "theme-shimmer-rgb": ["theme"],
-  "theme-shimmer-rgb-light": ["theme"],
-  "theme-hex": ["theme"],
-  "theme-claude-ansi": ["theme"],
-  "theme-shimmer-ansi": ["theme"],
-  "theme-brief-rgb-dark": ["theme"],
-  "theme-brief-rgb-light": ["theme"],
-  "theme-brief-ansi": ["theme"],
-  "remote-settings-off": ["remote-settings"],
-  "geo-stego-date": ["geo-neutralize"],
-  "geo-detect-probe": ["geo-neutralize"],
-  "geo-apostrophe-stego": ["geo-neutralize"],
-  "remove-cyber-risk": ["cyber-risk"],
-  "remove-url-restriction": ["url-restriction"],
-  "remove-cautious-actions": ["cautious-actions"],
-  "remove-not-logged-in": ["not-logged-in"],
-  "attachment-filter-bypass": ["message-filter"],
-  "message-filter-legacy": ["message-filter"],
-  "message-filter-s8": ["message-filter"]
-});
 
 // src/generic/patcher/enhancements/voice-asr-cometix.js
 var voice_asr_cometix_default = `// Upstream: CometixSpace/claude-code @ 68fd5465eb631ff8180631f37ca0046a2b38c85a
@@ -23725,10 +24023,10 @@ function transform(id, source, ast) {
   const replace = (node, value) => edits.push({ start: node.start, end: node.end, value });
   const insert = (at, value) => edits.push({ start: at, end: at, value });
   const prepend = (fn, value) => insert(fn.body.start + 1, value);
-  const enabled = gate2(id);
+  const enabled = gate(id);
   const choose = (yes, original) => `(${enabled}?${yes}:${text(original)})`;
   if (id === "voice-asr-backend") {
-    const asrEnabled = `(${enabled}&&(${gate2("enable-voice-mode")})&&(${gate2("voice-mode")})&&process.env.CLAUDE_CODE_ASR!=="0")`;
+    const asrEnabled = `(${enabled}&&(${gate("enable-voice-mode")})&&(${gate("voice-mode")})&&process.env.CLAUDE_CODE_ASR!=="0")`;
     const previousTransport = source.includes("/*__clawgod_cometix_voice-asr-backend__*/");
     const connectors = previousTransport ? [] : functions(["No OAuth token available"], 3).filter((fn) => text(fn).includes("VOICE_STREAM_BASE_URL") || fn.async && text(fn).includes("BASE_API_URL") && text(fn).includes("use_conversation_engine") && text(fn).includes("TranscriptInterim") && text(fn).includes("TranscriptEndpoint"));
     if (!previousTransport && source.includes("[voice_stream] No OAuth token available") && !connectors.length) {
@@ -23980,8 +24278,9 @@ function extendWithCometix(registry) {
 var agentTeamsPatch = {
   order: 5,
   name: "Agent Teams always enabled",
+  semanticId: "agent-teams",
   pattern: /function ([\w$]+)\(\)\{if\(![\w$]+\(process\.env\.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS\)&&![\w$]+\(\)\)return!1;if\(![\w$]+\("tengu_amber_flint",!0\)\)return!1;return!0\}|function ([\w$]+)\(\)\{if\(![\w$]+\.[\w$]+&&![\w$]+\(\)\)return!1;if\(![\w$]+\("tengu_amber_flint",!0\)\)return!1;return!0\}/g,
-  replacer: (match, firstFn, secondFn) => `function ${firstFn || secondFn}(){if(${gate2("agent-teams")})return!0;${match.slice(match.indexOf("{") + 1, -1)}}`,
+  replacer: (match, firstFn, secondFn) => `function ${firstFn || secondFn}(){if(${gate("agent-teams")})return!0;${match.slice(match.indexOf("{") + 1, -1)}}`,
   sentinel: "tengu_amber_flint",
   appliedMarker: /function [\w$]+\(\)\{if\(globalThis\.__clawgodPatches\?\.\["agent-teams"\]/
 };
@@ -24070,22 +24369,24 @@ var patches2 = [
   {
     order: 26,
     name: "Auto-mode unlock for third-party API (provider helper gate)",
+    semanticId: "auto-mode-helper-gate",
     pattern: /if\(!([\w$]+)\(([\w$]+)\)\)return!1;(?=(?:(?!function\s).){0,300}!=="firstParty")/g,
-    replacer: (match) => `if(${gate2("auto-mode-helper-gate")}===!1&&` + match.slice(3, -10) + ")return!1;",
+    replacer: (match) => `if(${gate("auto-mode-helper-gate")}===!1&&` + match.slice(3, -10) + ")return!1;",
     optional: true
   },
   {
     order: 27,
     name: "Auto-mode unlock for third-party API (inline gate)",
+    semanticId: "auto-mode-inline-gate",
     pattern: /if\((?:([\w$]+)!=="firstParty"&&(?:\1!=="anthropicAws"|![\w$]+\(\1\))[^;]*|[\w$]+\(\)&&\([\w$]+==="claude-opus-4-6"\|\|[\w$]+==="claude-sonnet-4-6"\|\|[\w$]+\.includes\("haiku"\)[^;]*?\))\)return!1;/g,
-    replacer: (match) => `if(${gate2("auto-mode-inline-gate")}===!1&&` + match.slice(3, -10) + ")return!1;",
+    replacer: (match) => `if(${gate("auto-mode-inline-gate")}===!1&&` + match.slice(3, -10) + ")return!1;",
     optional: true
   },
   {
     order: 28,
     name: "Auto-mode unlock for third-party API (provider opt-in helper)",
     pattern: /function ([\w$]+)\(([\w$]+)\)\{if\(\2==="firstParty"\|\|\2==="anthropicAws"\)return!0;return [\w$]+\(process\.env\.CLAUDE_CODE_ENABLE_AUTO_MODE\)\}/g,
-    replacer: (match, fn, arg) => `function ${fn}(${arg}){if(${gate2("auto-mode-provider-opt-in")})return!0;${match.slice(match.indexOf("{") + 1, -1)}}`,
+    replacer: (match, fn, arg) => `function ${fn}(${arg}){if(${gate("auto-mode-provider-opt-in")})return!0;${match.slice(match.indexOf("{") + 1, -1)}}`,
     sentinel: "process.env.CLAUDE_CODE_ENABLE_AUTO_MODE)}",
     appliedMarker: /function [\w$]+\([^)]*\)\{if\(globalThis\.__clawgodPatches\?\.\["auto-mode-provider-opt-in"\]/
   },
@@ -24093,7 +24394,7 @@ var patches2 = [
     order: 68,
     name: "Auto-mode classifier timeout override (CLAWGOD_CLASSIFIER_TIMEOUT_MS)",
     pattern: /function ([\w$]+)\(([\w$]+)\)\{let ([\w$]+)=Math\.max\(0,Math\.ceil\(\(\2-50000\)\/50000\)\);return Math\.min\(([\w$]+),([\w$]+)\+\3\*1e4\)\}/g,
-    replacer: (match, fn, arg, step, cap, base) => `function ${fn}(${arg}){let ${step}=Math.max(0,Math.ceil((${arg}-50000)/50000)),_r=Math.min(${cap},${base}+${step}*1e4),_ct=+process.env.CLAWGOD_CLASSIFIER_TIMEOUT_MS;return ${gate2("classifier-timeout")}&&Number.isFinite(_ct)&&process.env.CLAWGOD_CLASSIFIER_TIMEOUT_MS.trim()!==""?Math.max(_r,_ct):_r}`,
+    replacer: (match, fn, arg, step, cap, base) => `function ${fn}(${arg}){let ${step}=Math.max(0,Math.ceil((${arg}-50000)/50000)),_r=Math.min(${cap},${base}+${step}*1e4),_ct=+process.env.CLAWGOD_CLASSIFIER_TIMEOUT_MS;return ${gate("classifier-timeout")}&&Number.isFinite(_ct)&&process.env.CLAWGOD_CLASSIFIER_TIMEOUT_MS.trim()!==""?Math.max(_r,_ct):_r}`,
     unique: true,
     optional: true
   },
@@ -24101,7 +24402,7 @@ var patches2 = [
     order: 69,
     name: "Auto-mode classifier model override (CLAWGOD_CLASSIFIER_MODEL)",
     pattern: /function ([\w$]+)\(\)\{let [\w$]+=[\w$]+\(\),[\w$]+=[\w$]+\(.*?\),[\w$]+=[\w$]+\([\w$]+\?\.modelByMainModel,\{vet:/g,
-    replacer: (match, fn) => `function ${fn}(){let _cm=process.env.CLAWGOD_CLASSIFIER_MODEL?.trim();if(_cm&&${gate2("classifier-model")})return{value:_cm,src:"default"};` + match.slice(match.indexOf("{") + 1),
+    replacer: (match, fn) => `function ${fn}(){let _cm=process.env.CLAWGOD_CLASSIFIER_MODEL?.trim();if(_cm&&${gate("classifier-model")})return{value:_cm,src:"default"};` + match.slice(match.indexOf("{") + 1),
     unique: true,
     optional: true
   },
@@ -24109,7 +24410,7 @@ var patches2 = [
     order: 70,
     name: "Auto-mode classifier retries override (CLAWGOD_CLASSIFIER_RETRIES)",
     pattern: /function ([\w$]+)\(\)\{let [\w$]+=[\w$]+\([^)]*\)\?\.maxRetries;return typeof [\w$]+==="number"&&Number\.isInteger\([\w$]+\)&&[\w$]+>=0\?\{value:[\w$]+,src:"gb"\}:\{value:([\w$]+),src:"default"\}\}/g,
-    replacer: (match, fn) => `function ${fn}(){let _cr=process.env.CLAWGOD_CLASSIFIER_RETRIES?.trim();if(${gate2("classifier-retries")}&&_cr!==undefined&&_cr!==""&&Number.isInteger(+_cr)&&+_cr>=0)return{value:+_cr,src:"default"};` + match.slice(match.indexOf("{") + 1),
+    replacer: (match, fn) => `function ${fn}(){let _cr=process.env.CLAWGOD_CLASSIFIER_RETRIES?.trim();if(${gate("classifier-retries")}&&_cr!==undefined&&_cr!==""&&Number.isInteger(+_cr)&&+_cr>=0)return{value:+_cr,src:"default"};` + match.slice(match.indexOf("{") + 1),
     unique: true,
     optional: true
   }
@@ -24126,49 +24427,49 @@ var patches3 = [
     order: 30,
     name: "Logo + brand color \u2192 green (RGB dark)",
     pattern: /(clawd_body:)"rgb\(215,119,87\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-logo-rgb")}?"rgb(34,197,94)":"rgb(215,119,87)"`,
+    replacer: (match, key) => `${key}${gate("theme-logo-rgb")}?"rgb(34,197,94)":"rgb(215,119,87)"`,
     sentinel: 'clawd_body:"rgb(215,119,87)"'
   },
   {
     order: 31,
     name: "Logo + brand color \u2192 green (ANSI)",
     pattern: /(clawd_body:)"ansi:redBright"/g,
-    replacer: (match, key) => `${key}${gate2("theme-logo-ansi")}?"ansi:greenBright":"ansi:redBright"`,
+    replacer: (match, key) => `${key}${gate("theme-logo-ansi")}?"ansi:greenBright":"ansi:redBright"`,
     sentinel: 'clawd_body:"ansi:redBright"'
   },
   {
     order: 32,
     name: "Theme claude color \u2192 green (dark)",
     pattern: /(claude:)"rgb\(215,119,87\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-claude-rgb-dark")}?"rgb(34,197,94)":"rgb(215,119,87)"`,
+    replacer: (match, key) => `${key}${gate("theme-claude-rgb-dark")}?"rgb(34,197,94)":"rgb(215,119,87)"`,
     sentinel: 'claude:"rgb(215,119,87)"'
   },
   {
     order: 33,
     name: "Theme claude color \u2192 green (light)",
     pattern: /(claude:)"rgb\(255,153,51\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-claude-rgb-light")}?"rgb(22,163,74)":"rgb(255,153,51)"`,
+    replacer: (match, key) => `${key}${gate("theme-claude-rgb-light")}?"rgb(22,163,74)":"rgb(255,153,51)"`,
     sentinel: 'claude:"rgb(255,153,51)"'
   },
   {
     order: 34,
     name: "Shimmer \u2192 green",
     pattern: /(claudeShimmer:)"rgb\(2[34]5,1[45]9,1[12]7\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-shimmer-rgb")}?"rgb(74,222,128)":${match.slice(key.length)}`,
+    replacer: (match, key) => `${key}${gate("theme-shimmer-rgb")}?"rgb(74,222,128)":${match.slice(key.length)}`,
     appliedMarker: 'claudeShimmer:"rgb(74,222,128)"'
   },
   {
     order: 35,
     name: "Shimmer light \u2192 green",
     pattern: /(claudeShimmer:)"rgb\(255,183,101\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-shimmer-rgb-light")}?"rgb(34,197,94)":"rgb(255,183,101)"`,
+    replacer: (match, key) => `${key}${gate("theme-shimmer-rgb-light")}?"rgb(34,197,94)":"rgb(255,183,101)"`,
     sentinel: 'claudeShimmer:"rgb(255,183,101)"'
   },
   {
     order: 36,
     name: "Hex brand color \u2192 green",
     pattern: /"#da7756"/g,
-    replacer: () => `${gate2("theme-hex")}?"#22c55e":'#da7756'`,
+    replacer: () => `${gate("theme-hex")}?"#22c55e":'#da7756'`,
     sentinel: "#da7756",
     appliedMarker: /globalThis\.__clawgodPatches\?\.\["theme-hex"\]/
   },
@@ -24176,31 +24477,31 @@ var patches3 = [
     order: 37,
     name: "Theme claude color \u2192 green (ANSI)",
     pattern: /(claude:)"ansi:redBright"/g,
-    replacer: (match, key) => `${key}${gate2("theme-claude-ansi")}?"ansi:greenBright":"ansi:redBright"`
+    replacer: (match, key) => `${key}${gate("theme-claude-ansi")}?"ansi:greenBright":"ansi:redBright"`
   },
   {
     order: 38,
     name: "Shimmer \u2192 green (ANSI)",
     pattern: /(claudeShimmer:)"ansi:yellowBright"/g,
-    replacer: (match, key) => `${key}${gate2("theme-shimmer-ansi")}?"ansi:greenBright":"ansi:yellowBright"`
+    replacer: (match, key) => `${key}${gate("theme-shimmer-ansi")}?"ansi:greenBright":"ansi:yellowBright"`
   },
   {
     order: 39,
     name: "Brief label claude color \u2192 green (RGB dark)",
     pattern: /(briefLabelClaude:)"rgb\(215,119,87\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-brief-rgb-dark")}?"rgb(34,197,94)":"rgb(215,119,87)"`
+    replacer: (match, key) => `${key}${gate("theme-brief-rgb-dark")}?"rgb(34,197,94)":"rgb(215,119,87)"`
   },
   {
     order: 40,
     name: "Brief label claude color \u2192 green (RGB light)",
     pattern: /(briefLabelClaude:)"rgb\(255,153,51\)"/g,
-    replacer: (match, key) => `${key}${gate2("theme-brief-rgb-light")}?"rgb(22,163,74)":"rgb(255,153,51)"`
+    replacer: (match, key) => `${key}${gate("theme-brief-rgb-light")}?"rgb(22,163,74)":"rgb(255,153,51)"`
   },
   {
     order: 41,
     name: "Brief label claude color \u2192 green (ANSI)",
     pattern: /(briefLabelClaude:)"ansi:redBright"/g,
-    replacer: (match, key) => `${key}${gate2("theme-brief-ansi")}?"ansi:greenBright":"ansi:redBright"`
+    replacer: (match, key) => `${key}${gate("theme-brief-ansi")}?"ansi:greenBright":"ansi:redBright"`
   }
 ];
 var brandingRegistry = Object.freeze({
@@ -24457,7 +24758,7 @@ var patches5 = [
     order: 17,
     name: "Computer Use subscription bypass",
     pattern: /function ([\w$]+)\(\)\{let [\w$]+=[\w$]+\(\);return [\w$]+==="max"\|\|[\w$]+==="pro"\}/g,
-    replacer: (match, fn) => `function ${fn}(){if(${gate2("computer-use-sub")})return!0;${match.slice(`function ${fn}(){`.length, -1)}}`,
+    replacer: (match, fn) => `function ${fn}(){if(${gate("computer-use-sub")})return!0;${match.slice(`function ${fn}(){`.length, -1)}}`,
     appliedMarker: "/*__clawgod_computer_use_subscription__*/"
   },
   {
@@ -24465,14 +24766,14 @@ var patches5 = [
     name: "Computer Use default enabled",
     semanticId: "computer-use-default",
     pattern: /([\w$]+=)\{enabled:!1,pixelValidation/g,
-    replacer: (match, prefix) => `${prefix}{enabled:${gate2("computer-use-default")}?!0:!1,pixelValidation`,
+    replacer: (match, prefix) => `${prefix}{enabled:${gate("computer-use-default")}?!0:!1,pixelValidation`,
     sentinel: "{enabled:!1,pixelValidation"
   },
   {
     order: 23,
     name: "Computer Use gate bypass",
     pattern: /function ([\w$]+)\(\)\{if\([\w$]+\("hipaa"\)\)return\s*!1;(?:if\([\w$]+\(\)\)return!0;)?return [\w$]+\(\)(?:&&[\w$]+\(\))*&&[\w$]+(?:\(\))?\.(?:enabled|read)\}/g,
-    replacer: (match) => match.replace(/(return\s*!1;)/, `$1if(${gate2("computer-use-gate")})return!0;/*__clawgod_computer_use_gate_v2__*/`),
+    replacer: (match) => match.replace(/(return\s*!1;)/, `$1if(${gate("computer-use-gate")})return!0;/*__clawgod_computer_use_gate_v2__*/`),
     sentinel: '"hipaa"))return!1;return',
     appliedMarker: "/*__clawgod_computer_use_gate_v2__*/"
   },
@@ -24573,7 +24874,7 @@ var patches8 = [
     name: "Ultraplan enable",
     semanticId: "ultraplan",
     pattern: /(name:"ultraplan",[\s\S]{1,500}?)(?:availability:(\[[^\]]*\]),)?(isEnabled:\(\)=>)(!1|[\w$]+\(\))/g,
-    replacer: (match, prefix, availability, enabled, original) => availability ? `${prefix}availability:${gate2("ultraplan")}?undefined:${availability},${enabled}${gate2("ultraplan")}?!0:${original}` : `${prefix}${enabled}${gate2("ultraplan")}?!0:${original}`,
+    replacer: (match, prefix, availability, enabled, original) => availability ? `${prefix}availability:${gate("ultraplan")}?undefined:${availability},${enabled}${gate("ultraplan")}?!0:${original}` : `${prefix}${enabled}${gate("ultraplan")}?!0:${original}`,
     sentinel: 'name:"ultraplan"',
     appliedMarker: /name:"ultraplan",[\s\S]{1,500}?globalThis\.__clawgodPatches\?\.\["ultraplan"\]/
   },
@@ -24581,7 +24882,7 @@ var patches8 = [
     order: 20,
     name: "Ultrareview enable (rQt gate)",
     pattern: /function ([\w$]+)\(\)\{return ([\w$]+)\(\)\?\.enabled===!0&&[\w$]+\(\)&&![\w$]+\(\)\}/g,
-    replacer: (match, fn) => `function ${fn}(){return ${gate2("ultrareview-gate")}?!0:(${match.slice(`function ${fn}(){return `.length, -1)})}`,
+    replacer: (match, fn) => `function ${fn}(){return ${gate("ultrareview-gate")}?!0:(${match.slice(`function ${fn}(){return `.length, -1)})}`,
     optional: true,
     appliedMarker: "/*__clawgod_ultrareview_enabled__*/"
   },
@@ -24589,7 +24890,7 @@ var patches8 = [
     order: 21,
     name: "Ultrareview enable (direct literal, <=2.1.213)",
     pattern: /function ([\w$]+)\(\)\{return ([\w$]+)\("tengu_review_bughunter_config",null\)(\?\.enabled===!0)?\}/g,
-    replacer: (match, fn, getter, hasGate) => hasGate ? `function ${fn}(){if(${gate2("ultrareview-direct")})return!0;${match.slice(`function ${fn}(){`.length, -1)}}` : `function ${fn}(){let _r=${getter}("tengu_review_bughunter_config",null);return ${gate2("ultrareview-direct")}?_r?{..._r,enabled:!0}:{enabled:!0}:_r}`,
+    replacer: (match, fn, getter, hasGate) => hasGate ? `function ${fn}(){if(${gate("ultrareview-direct")})return!0;${match.slice(`function ${fn}(){`.length, -1)}}` : `function ${fn}(){let _r=${getter}("tengu_review_bughunter_config",null);return ${gate("ultrareview-direct")}?_r?{..._r,enabled:!0}:{enabled:!0}:_r}`,
     optional: true,
     sentinel: '("tengu_review_bughunter_config",null)',
     appliedMarker: /function [\w$]+\(\)\{(?:if\(globalThis\.__clawgodPatches\?\.\["ultrareview-direct"\]|let _r=[\w$]+\("tengu_review_bughunter_config",null\);return globalThis\.__clawgodPatches\?\.\["ultrareview-direct"\])/
@@ -24597,8 +24898,9 @@ var patches8 = [
   {
     order: 22,
     name: "Ultrareview enable (v2.1.215+ gate)",
+    semanticId: "ultrareview-v215",
     pattern: /(function ([\w$]+)\(\)\{return [\w$]+\(ulu,null\)\})([\s\S]{0,1500}?)(function ([\w$]+)\(\)\{return \2\(\)\?\.enabled===!0&&[\w$]+\(\)&&![\w$]+\(\)\})/g,
-    replacer: (match, getterDefinition, getter, between, gateDefinition, gateFn) => `${getterDefinition}${between}function ${gateFn}(){return ${gate2("ultrareview-gate")}?!0:(${gateDefinition.slice(`function ${gateFn}(){return `.length, -1)})}`,
+    replacer: (match, getterDefinition, getter, between, gateDefinition, gateFn) => `${getterDefinition}${between}function ${gateFn}(){return ${gate("ultrareview-gate")}?!0:(${gateDefinition.slice(`function ${gateFn}(){return `.length, -1)})}`,
     sentinel: 'var ulu="tengu_review_bughunter_config"',
     appliedMarker: /function [\w$]+\(\)\{return globalThis\.__clawgodPatches\?\.\["ultrareview-gate"\]/
   }
@@ -24616,7 +24918,7 @@ var patches9 = [
     name: "Neutralize geo-steganography in date string (qla)",
     semanticId: "geo-stego-date",
     pattern: /function ([\w$]+)\(([\w$]+)\)\{let [\w$]+=[\w$]+\(\),[\w$]+=[\w$]+\([\w$]+\?\.[\w$]+\?\?!1,[\w$]+\?\.[\w$]+\?\?!1\),[\w$]+=[\w$]+\?\.[\w$]+\?[\w$]+\.replaceAll\("-","\/"\):[\w$]+;return`Today\$\{[\w$]+\}s date is \$\{[\w$]+\}\.`\}/g,
-    replacer: (match, fn, parameter) => `function ${fn}(${parameter}){if(${gate2("geo-stego-date")})return\`Today's date is \${${parameter}}.\`;${match.slice(match.indexOf("{") + 1, -1)}}`,
+    replacer: (match, fn, parameter) => `function ${fn}(${parameter}){if(${gate("geo-stego-date")})return\`Today's date is \${${parameter}}.\`;${match.slice(match.indexOf("{") + 1, -1)}}`,
     sentinel: 'replaceAll("-","/")',
     appliedMarker: /function [\w$]+\([^)]*\)\{if\(globalThis\.__clawgodPatches\?\.\["geo-stego-date"\]/
   },
@@ -24624,7 +24926,7 @@ var patches9 = [
     order: 48,
     name: "Neutralize geo-detection probe (rdp)",
     pattern: /function ([\w$]+)\(\)\{if\([\w$]+\(\)\)return null;let [\w$]+=[\w$]+\(\),[\w$]+=[\w$]+\(\),[\w$]+=[\w$]+==="Asia\/Shanghai"\|\|[\w$]+==="Asia\/Urumqi"[\s\S]*?\}\}/g,
-    replacer: (match, fn) => `function ${fn}(){if(${gate2("geo-detect-probe")})return null;${match.slice(`function ${fn}(){`.length, -1)}}`,
+    replacer: (match, fn) => `function ${fn}(){if(${gate("geo-detect-probe")})return null;${match.slice(`function ${fn}(){`.length, -1)}}`,
     sentinel: "Asia/Shanghai",
     appliedMarker: /function [\w$]+\(\)\{if\(globalThis\.__clawgodPatches\?\.\["geo-detect-probe"\]/
   },
@@ -24632,7 +24934,7 @@ var patches9 = [
     order: 49,
     name: "Neutralize apostrophe steganography (odp)",
     pattern: new RegExp("function ([\\w$]+)\\(([\\w$]+),([\\w$]+)\\)\\{" + `if\\(!\\2&&!\\3\\)return"'";` + 'if\\(\\2&&!\\3\\)return"(?:\\\\u2019|\\u2019)";' + 'if\\(!\\2&&\\3\\)return"(?:\\\\u02[Bb][Cc]|\\u02BC)";' + 'return"(?:\\\\u02[Bb]9|\\u02B9)"\\}', "g"),
-    replacer: (match, fn, first, second) => `function ${fn}(${first},${second}){if(${gate2("geo-apostrophe-stego")})return"'";${match.slice(match.indexOf("{") + 1, -1)}}`,
+    replacer: (match, fn, first, second) => `function ${fn}(${first},${second}){if(${gate("geo-apostrophe-stego")})return"'";${match.slice(match.indexOf("{") + 1, -1)}}`,
     optional: true
   }
 ];
@@ -24669,7 +24971,7 @@ var patches10 = [
     order: 50,
     name: "Remove CYBER_RISK_INSTRUCTION",
     pattern: /([\w$]+)="(IMPORTANT: Assist with authorized security testing[^"]*)"/g,
-    replacer: (match, variable, original) => `${variable}=${gate2("remove-cyber-risk")}?"":${JSON.stringify(original)}`,
+    replacer: (match, variable, original) => `${variable}=${gate("remove-cyber-risk")}?"":${JSON.stringify(original)}`,
     sentinel: "Assist with authorized security testing",
     appliedMarker: /globalThis\.__clawgodPatches\?\.\["remove-cyber-risk"\]/
   },
@@ -24677,7 +24979,7 @@ var patches10 = [
     order: 51,
     name: "Remove URL generation restriction",
     pattern: /(\n\$\{[\w$]+\})(\nIMPORTANT: You must NEVER generate or guess URLs[^.]*\. You may use URLs provided by the user in their messages or local files\.)/g,
-    replacer: (match, prefix, sentence) => `\${${gate2("remove-url-restriction")}?"":\`${prefix}\`+'${sentence.replace(`
+    replacer: (match, prefix, sentence) => `\${${gate("remove-url-restriction")}?"":\`${prefix}\`+'${sentence.replace(`
 `, "\\n")}'}`,
     sentinel: "IMPORTANT: You must NEVER generate or guess URLs",
     appliedMarker: /globalThis\.__clawgodPatches\?\.\["remove-url-restriction"\]/
@@ -24686,7 +24988,7 @@ var patches10 = [
     order: 52,
     name: "Remove cautious actions section",
     pattern: /function ([\w$]+)\(([\w$]*)\)\{(?:if\([\s\S]{1,200}?\)return`# Executing actions with care\n\n[\s\S]*?`;)?return`# Executing actions with care\n\n[\s\S]*?`\}/g,
-    replacer: (match, fn, argument) => `function ${fn}(${argument}){if(${gate2("remove-cautious-actions")})return\`\`;${match.slice(`function ${fn}(${argument}){`.length, -1)}}`,
+    replacer: (match, fn, argument) => `function ${fn}(${argument}){if(${gate("remove-cautious-actions")})return\`\`;${match.slice(`function ${fn}(${argument}){`.length, -1)}}`,
     sentinel: "# Executing actions with care",
     appliedMarker: /function [\w$]+\([^)]*\)\{if\(globalThis\.__clawgodPatches\?\.\["remove-cautious-actions"\]/
   },
@@ -24694,28 +24996,28 @@ var patches10 = [
     order: 53,
     name: 'Remove "Not logged in" notice',
     pattern: /"(Not logged in\. Run [\w ]+ to authenticate\.)"/g,
-    replacer: (match, original) => `(${gate2("remove-not-logged-in")}?"":'${original}')`,
+    replacer: (match, original) => `(${gate("remove-not-logged-in")}?"":'${original}')`,
     optional: true
   },
   {
     order: 54,
     name: "Attachment filter bypass",
     pattern: /([\w$]+)\(\)!=="ant"(&&[\w$]+\.has\([\w$]+\.attachment\.type\)|\)\{if\([\w$]+\.attachment\.type==="hook_additional_context")/g,
-    replacer: (match) => match.replace(/([\w$]+)\(\)!=="ant"(&&|\))/, (ignored, fn, separator) => separator === "&&" ? `(${gate2("attachment-filter-bypass")}?!1:${fn}()!=="ant")&&` : `(${gate2("attachment-filter-bypass")}?!1:${fn}()!=="ant"))`),
+    replacer: (match) => match.replace(/([\w$]+)\(\)!=="ant"(&&|\))/, (ignored, fn, separator) => separator === "&&" ? `(${gate("attachment-filter-bypass")}?!1:${fn}()!=="ant")&&` : `(${gate("attachment-filter-bypass")}?!1:${fn}()!=="ant"))`),
     optional: true
   },
   {
     order: 55,
     name: "Message list filter bypass (legacy ternary)",
     pattern: /([\w$]+)\(\)!=="ant"\?([\w$]+)\(([\w$]+),([\w$]+)\(([\w$]+)\)\):([\w$]+)/g,
-    replacer: (match, fn) => match.replace(/^[\w$]+\(\)!=="ant"\?/, `(${gate2("message-filter-legacy")}?!1:${fn}()!=="ant")?`),
+    replacer: (match, fn) => match.replace(/^[\w$]+\(\)!=="ant"\?/, `(${gate("message-filter-legacy")}?!1:${fn}()!=="ant")?`),
     optional: true
   },
   {
     order: 56,
     name: "Message list filter bypass (s_8 form)",
     pattern: /if\(([\w$]+)\(\)==="ant"\)return ([\w$]+);let ([\w$]+)=([\w$]+) instanceof Set\?\4:([\w$]+)\(\4\);return ([\w$]+)\(\2,\3\)/g,
-    replacer: (match, fn) => match.replace(/if\([\w$]+\(\)==="ant"\)/, `if(${gate2("message-filter-s8")}||${fn}()==="ant")`),
+    replacer: (match, fn) => match.replace(/if\([\w$]+\(\)==="ant"\)/, `if(${gate("message-filter-s8")}||${fn}()==="ant")`),
     optional: true
   }
 ];
@@ -24731,7 +25033,7 @@ var patches11 = [{
   name: "Voice Mode enable (bypass GrowthBook kill)",
   semanticId: "voice-mode",
   pattern: /function ([\w$]+)\(\)\{return![\w$]+\("tengu_amber_quartz_disabled",!1\)\}/g,
-  replacer: (match, fn) => `function ${fn}(){return ${gate2("voice-mode")}?!0:(${match.slice(`function ${fn}(){return`.length, -1)})}`,
+  replacer: (match, fn) => `function ${fn}(){return ${gate("voice-mode")}?!0:(${match.slice(`function ${fn}(){return`.length, -1)})}`,
   optional: true
 }];
 var voiceHoldInput = Object.freeze({
@@ -24745,7 +25047,7 @@ var voiceHoldInput = Object.freeze({
     const separator = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
-    const modules = source.split(separator), enabled = `(${gate2("voice-hold-input")}&&${gate2("voice-mode")})`;
+    const modules = source.split(separator), enabled = `(${gate("voice-hold-input")}&&${gate("voice-mode")})`;
     if (!modules.some((code) => code.includes("voice:pushToTalk") && !code.includes(marker))) {
       return { status: source.includes(marker) ? "already" : "skipped", detail: "no unpatched voice input" };
     }
@@ -25034,14 +25336,17 @@ ${"\u2550".repeat(55)}`);
       failed++;
   };
   try {
-    const semanticDescriptors = [...patches, ...customPatches].filter((descriptor) => descriptor.semanticId);
+    const semanticDescriptors = [...patches, ...customPatches].filter((descriptor) => descriptor.semanticId).sort((left, right) => left.order - right.order);
     const semantic = applySemanticPatches(code, semanticDescriptors, { dryRun, verify });
     code = semantic.code;
     for (const descriptor of semanticDescriptors) {
       const result = semantic.results.get(descriptor);
-      if (result.status === "stale")
-        stale(descriptor.name, result.detail);
-      else if (result.status === "failed") {
+      if (result.status === "stale") {
+        if (descriptor.optional)
+          skipped++;
+        else
+          stale(descriptor.name, result.detail);
+      } else if (result.status === "failed") {
         console.log(`  FAILED ${descriptor.name} \u2014 ${result.detail}`);
         failed++;
       } else if (result.status === "applied" || result.status === "already") {

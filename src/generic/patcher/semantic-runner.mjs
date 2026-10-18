@@ -1,3 +1,4 @@
+import { ANCHOR_PATCH_IDS, scanAstAnchors } from './ast-anchors.mjs';
 import { AST_PATCH_IDS, applyAstEdits, parsePatchSource, scanAstPatches } from './semantic.mjs';
 
 export const MODULE_SEPARATOR = '\n/*__CLAWGOD_MODULE_BOUNDARY__*/\n';
@@ -11,10 +12,20 @@ export class SourceCompatibilityError extends Error {
 
 export function applySemanticPatches(source, descriptors, { dryRun = false, verify = false } = {}) {
   const modules = source.split(MODULE_SEPARATOR);
+  const anchorIds = new Set(descriptors
+    .map(descriptor => descriptor.semanticId)
+    .filter(id => id && ANCHOR_PATCH_IDS.includes(id)));
   const scans = [];
   for (let index = 0; index < modules.length; index++) {
     try {
-      scans.push(scanAstPatches(modules[index]));
+      const tree = parsePatchSource(modules[index]);
+      const anchors = anchorIds.size
+        ? scanAstAnchors(modules[index], { tree, ids: anchorIds })
+        : {};
+      scans.push({
+        ...scanAstPatches(modules[index], { tree }),
+        ...anchors,
+      });
     } catch (error) {
       if (error?.name === 'SyntaxError') {
         throw new SourceCompatibilityError(`upstream bundle is not parseable (module ${index}): ${error.message}`, { cause: error });
@@ -26,7 +37,9 @@ export function applySemanticPatches(source, descriptors, { dryRun = false, veri
   const edits = modules.map(() => []);
   for (const descriptor of descriptors) {
     const id = descriptor.semanticId;
-    if (!AST_PATCH_IDS.includes(id)) throw new Error(`Unknown semantic patch: ${id}`);
+    if (!AST_PATCH_IDS.includes(id) && !ANCHOR_PATCH_IDS.includes(id)) {
+      throw new Error(`Unknown semantic patch: ${id}`);
+    }
     const matches = scans.flatMap(scan => scan[id].matches);
     const present = scans.some(scan => scan[id].present);
     if (scans.some(scan => scan[id].ambiguous) || (id === 'remote-settings-off' && matches.length > 1)) {

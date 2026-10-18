@@ -150,13 +150,17 @@ export async function runPatcher({ rootDir = DEFAULT_ROOT, args = process.argv.s
     else failed++;
   };
   try {
-    const semanticDescriptors = [...patches, ...customPatches].filter(descriptor => descriptor.semanticId);
+    const semanticDescriptors = [...patches, ...customPatches]
+      .filter(descriptor => descriptor.semanticId)
+      .sort((left, right) => left.order - right.order);
     const semantic = applySemanticPatches(code, semanticDescriptors, { dryRun, verify });
     code = semantic.code;
     for (const descriptor of semanticDescriptors) {
       const result = semantic.results.get(descriptor);
-      if (result.status === 'stale') stale(descriptor.name, result.detail);
-      else if (result.status === 'failed') {
+      if (result.status === 'stale') {
+        if (descriptor.optional) skipped++;
+        else stale(descriptor.name, result.detail);
+      } else if (result.status === 'failed') {
         console.log(`  FAILED ${descriptor.name} — ${result.detail}`);
         failed++;
       } else if (result.status === 'applied' || result.status === 'already') {

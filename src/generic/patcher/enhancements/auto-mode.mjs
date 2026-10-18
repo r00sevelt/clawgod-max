@@ -4,6 +4,7 @@ const patches = [
   {
     order: 26,
     name: 'Auto-mode unlock for third-party API (provider helper gate)',
+    semanticId: 'auto-mode-helper-gate',
     pattern: /if\(!([\w$]+)\(([\w$]+)\)\)return!1;(?=(?:(?!function\s).){0,300}!=="firstParty")/g,
     replacer: (match) => `if(${gate('auto-mode-helper-gate')}===!1&&` + match.slice(3, -10) + ')return!1;',
     optional: true,
@@ -11,6 +12,7 @@ const patches = [
   {
     order: 27,
     name: 'Auto-mode unlock for third-party API (inline gate)',
+    semanticId: 'auto-mode-inline-gate',
     pattern: /if\((?:([\w$]+)!=="firstParty"&&(?:\1!=="anthropicAws"|![\w$]+\(\1\))[^;]*|[\w$]+\(\)&&\([\w$]+==="claude-opus-4-6"\|\|[\w$]+==="claude-sonnet-4-6"\|\|[\w$]+\.includes\("haiku"\)[^;]*?\))\)return!1;/g,
     replacer: (match) => `if(${gate('auto-mode-inline-gate')}===!1&&` + match.slice(3, -10) + ')return!1;',
     optional: true,

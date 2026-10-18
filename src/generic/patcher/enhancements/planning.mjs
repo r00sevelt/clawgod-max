@@ -36,6 +36,7 @@ const patches = [
   {
     order: 22,
     name: 'Ultrareview enable (v2.1.215+ gate)',
+    semanticId: 'ultrareview-v215',
     pattern: /(function ([\w$]+)\(\)\{return [\w$]+\(ulu,null\)\})([\s\S]{0,1500}?)(function ([\w$]+)\(\)\{return \2\(\)\?\.enabled===!0&&[\w$]+\(\)&&![\w$]+\(\)\})/g,
     replacer: (match, getterDefinition, getter, between, gateDefinition, gateFn) =>
       `${getterDefinition}${between}function ${gateFn}(){return ${gate('ultrareview-gate')}?!0:(${gateDefinition.slice(`function ${gateFn}(){return `.length, -1)})}`,
