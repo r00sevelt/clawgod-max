@@ -114,3 +114,12 @@
 - **关键修正**：初版 context-limit 解构多了一个前导空位，导致 `1e6` 丢失、真实 2.1.302 chunk 首个导出名被删（Windows E2E `Export 'tJe' is not defined`）；修 `8ab47b7`。随后把“源码含 200000 即 stale”的旧 custom patch 兜底错误下放到单模块，导致 decoy 和真实多 chunk 匹配被误判；最终把兜底放到 `semantic-runner` 整包聚合层，并让真实 matches 优先（`1517061`），同时保留 `patcher-semantic` 的旧契约。
 - **状态**：已推送；云端 Compat Daily run `39158502296` 三 job 全绿（Linux x64 / macOS ARM64 / windows-smoke）。Windows 真实 2.1.302 安装生命周期绿；同路径日志（8ab47b7）为 context-limit 9 replacements、整体 51 applied / 23 skipped / 0 failed。提交 `6b2d795`（第 2 批）+ `8ab47b7`（解构修正）/`f9da101`（中间尝试，已被取代）/`1517061`（整包 stale 兜底）。
 - **教训**：AST matcher 的 `present` 是“单模块”信号，旧 regex/custom patch 的 stale 语义可能是“整包”信号；两者不能直接下放。跨模块聚合必须在 `semantic-runner` 层做，且真实 matches 优先于其他模块的 present。
+
+## 2026-10-19：302 行格渲染器 AST fallback（定位改 AST、校验留字节）
+
+- **目标与边界**：冻结档案与 2.1.299 结构档案保持快路径；只有全部失配且不属已知版本时，才用 acorn 定位行格类。
+- **实现**：`post-processor.mjs` 新增 `astCellProfile` / `adaptCellRendererAst` / `frozenCellFamily`；`adaptCellRenderer` 顺序为冻结档案 → 2.1.299 结构档案 → family guard → AST fallback。AST 只负责定位，替换仍复用 `adaptCellRendererShape` 的 header/digest/span 与 `stylePool;charPool;native=` 守卫；替换后重新 parse，校验注入标记、`writeCell`/`paintCells`、原行格类标记消失、无私有 `Bun.ant.CellSegmenter` 残留。共享安装路径同步支持 AST 发现的 shared profile，并对“冻结分块名命中但渲染器漂移”的情况重试结构档案。
+- **测试**：新增 `tests/runtime-cell-ast-fallback.mjs`，覆盖 302 三平台真实夹具、错误堆栈类诱饵、候选歧义、替换后守卫失败、冻结快路径优先、已知版本依赖漂移拒绝、合成新版本 fallback。
+- **关键修正**：首版 fallback 门禁只比 `structuralModule` digest，2.1.299 的 `widthMask:vn → widthMask:unknown` 漂移被误判为新版本；`c02fb5f` 在 `CELL_STRUCTURAL_SHAPES` 三个 renderer 加 `topBindings` 指纹，digest 或顶层绑定指纹任一命中即拒绝 fallback。
+- **状态**：已推送；云端 Compat Daily run `39161778236` 三 job 全绿（Linux x64 / macOS ARM64 / windows-smoke）。提交 `8ec8660`（fallback）+ `c02fb5f`（2.1.299 家族指纹）。
+- **教训**：`structuralModule.digest` 对绑定改名不敏感，但对“把绑定换成自由全局”敏感；已知版本的 family guard 不能只看 digest，需要加一个顶层绑定指纹。
