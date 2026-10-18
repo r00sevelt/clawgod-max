@@ -527,7 +527,7 @@ const enhancementIds = [
 const enhancementSemanticMarkers = {
   'README.md': ['默认启用 **standard 档**', 'claude update', '不会删除'],
   'README_EN.md': ['standard profile** is enabled by default', 'claude update', 'never deletes'],
-  'README_JP.md': ['デフォルトで 21', 'claude update', '削除しません'],
+  'README_JP.md': ['standard プロファイル', 'claude update', '削除しません'],
 };
 for (const path of ['README.md', 'README_EN.md', 'README_JP.md']) {
   const source = read(path);
