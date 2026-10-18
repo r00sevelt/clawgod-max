@@ -210,7 +210,7 @@ export const visitors = [
         : '';
 
       if (declaration?.dual) {
-        const [, a, b, c, d, e] = declaration.names;
+        const [a, b, c, d, e] = declaration.names;
         ctx.edit(CONTEXT_LIMIT_ID,
           { type: 'ContextLimitDeclaration', start: declaration.start, end: declaration.end },
           `var ${a}=${ENV_EXPR},${b}=${ENV_EXPR},${c}=32000,${d}=128000${e ? `,${e}=1e6` : ''}${registration}`);
