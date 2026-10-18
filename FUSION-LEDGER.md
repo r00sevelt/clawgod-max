@@ -105,3 +105,12 @@
 - **第一批转换**：`agents#5`（Agent Teams：env/member + `tengu_amber_flint` 结构）、`planning#22`（Ultrareview：按 `tengu_review_bughunter_config` 字面量绑定 getter，去掉 `var ulu=` 压缩名 sentinel）、`auto-mode#26/#27`（firstParty/anthropicAws 与模型 ID 结构，去掉 300 字 lookahead 与 `claude-*-4-6` 写死）。描述符保留原 regex 字段，供 Task 5 快照和 runtime-features 直测；运行时由 AST matcher 接管。
 - **测试**：新增 `tests/patcher-ast-anchors.mjs`（正/负样本、字符串诱饵、漂移 present、幂等）；`installer-build` 源文件清单加入 `ast-anchors.mjs`；2.1.215 字节 hash、registry、runtime-features 作为回归。
 - **状态**：已推送；云端 Compat Daily run `39153612223` 三平台全绿。2.1.215 字节 hash 保持；真实 2.1.302 安装器 E2E 断言 `OK Agent Teams always enabled` 与 `OK Ultrareview enable (v2.1.215+ gate)` 均实际 apply；新单测 `patcher-ast-anchors` 通过。转换后 2.1.215 计数由 24/59 变为 23/60（v2.1.215+ 语义门取代 rQt 替代门，输出字节不变）。提交 `e60b538`（第 1 批）+ `b11db22`（左结合）/`0ef9c6b`（gate 键）/`a20bf8c`（计数）/`4fb43c0`（E2E 断言）。
+
+## 2026-10-19：锚点 AST 化（第 2 批：core / chrome / agents）
+
+- **基础设施**：新增 `src/generic/patcher/ast-anchors2/index.mjs`（`BATCH2_ANCHOR_IDS` + `scanBatch2Anchors`，单次 walk 分发多个 visitor）；`semantic-runner.mjs` 每模块只 parse 一次，合并 batch-1/batch-2 scanner；`terminal-reply-delay.mjs` 抽出共享 `terminalReplyDelay`，避免 core ↔ terminal-reply matcher 循环依赖；`installer-build` 源清单同步。
+- **第二批转换**：`core#61`（context limit：AST 定位 4/5 连声明与 `return X?Y(X)>200000:!1`，保留 ESM refresh 注册）、`core#90`（terminal reply：定位 `flushIncomplete` 四语句体，插入与 regex replacer 完全相同的文本，含 `terminalReplyDelay.toString()`）、`chrome#13`（Chrome agents config：按六键集合定位，键序无关，拒绝 spread/重复键）、`agents#6`（session metadata：按单参 parser 循环、六 debug 旗标、`--debug-file` 跳对定位，插入 `--session-id` 分支）。描述符保留原 regex 字段，运行时由 AST matcher 接管。
+- **测试**：新增 `tests/patcher-ast-anchors2-core.mjs`、`tests/patcher-ast-anchors2-enhancements.mjs`；覆盖正/负样本、字符串诱饵、漂移 present、幂等、字节比对；`installer-build` 源清单加入 batch-2 文件。
+- **关键修正**：初版 context-limit 解构多了一个前导空位，导致 `1e6` 丢失、真实 2.1.302 chunk 首个导出名被删（Windows E2E `Export 'tJe' is not defined`）；修 `8ab47b7`。随后把“源码含 200000 即 stale”的旧 custom patch 兜底错误下放到单模块，导致 decoy 和真实多 chunk 匹配被误判；最终把兜底放到 `semantic-runner` 整包聚合层，并让真实 matches 优先（`1517061`），同时保留 `patcher-semantic` 的旧契约。
+- **状态**：已推送；云端 Compat Daily run `39158502296` 三 job 全绿（Linux x64 / macOS ARM64 / windows-smoke）。Windows 真实 2.1.302 安装生命周期绿；同路径日志（8ab47b7）为 context-limit 9 replacements、整体 51 applied / 23 skipped / 0 failed。提交 `6b2d795`（第 2 批）+ `8ab47b7`（解构修正）/`f9da101`（中间尝试，已被取代）/`1517061`（整包 stale 兜底）。
+- **教训**：AST matcher 的 `present` 是“单模块”信号，旧 regex/custom patch 的 stale 语义可能是“整包”信号；两者不能直接下放。跨模块聚合必须在 `semantic-runner` 层做，且真实 matches 优先于其他模块的 present。
