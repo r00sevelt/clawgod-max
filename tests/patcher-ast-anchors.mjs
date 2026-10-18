@@ -95,7 +95,7 @@ function apply(source, id) {
 
 {
   const source = 'var ulu="tengu_review_bughunter_config";\nfunction Bot(){return et(ulu,null)}\nfunction oQt(){return Bot()?.enabled===!0&&ru()&&!X6()}';
-  const expected = `var ulu="tengu_review_bughunter_config";\nfunction Bot(){return et(ulu,null)}\nfunction oQt(){return ${gate('ultrareview-v215')}?!0:(Bot()?.enabled===!0&&ru()&&!X6())}`;
+  const expected = `var ulu="tengu_review_bughunter_config";\nfunction Bot(){return et(ulu,null)}\nfunction oQt(){return ${gate('ultrareview-gate')}?!0:(Bot()?.enabled===!0&&ru()&&!X6())}`;
   const { result, patched } = apply(source, 'ultrareview-v215');
   assert.equal(result.matches.length, 1, 'Ultrareview v2.1.215 must bind the getter by its config literal');
   assert.equal(patched, expected, 'Ultrareview v2.1.215 must preserve the original gate expression');

@@ -23249,13 +23249,13 @@ function scanAstAnchors(code, { tree = parsePatchSource(code), ids = ANCHOR_PATC
             continue;
           if (isUltrareviewGateArg(ret.argument, getter.name)) {
             context.saw[id] = true;
-            edit(result, ret.argument, `${gate(id)}?!0:(${code.slice(ret.argument.start, ret.argument.end)})`);
+            edit(result, ret.argument, `${gate("ultrareview-gate")}?!0:(${code.slice(ret.argument.start, ret.argument.end)})`);
           } else if (containsGetterCall(ret.argument, getter.name)) {
             context.saw[id] = true;
           }
         }
       }
-      if (hasGate(node, id) && context.getters.some((getter) => node.start > getter.node.end && node.start - getter.node.end <= 1500)) {
+      if (hasGate(node, "ultrareview-gate") && context.getters.some((getter) => node.start > getter.node.end && node.start - getter.node.end <= 1500)) {
         result.patched = true;
       }
     }
