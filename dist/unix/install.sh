@@ -17160,7 +17160,7 @@ var __toESM = (mod, isNodeMode, target) => {
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
 
-// ../clawgod-max/src/generic/patcher/vendor/acorn.cjs
+// src/generic/patcher/vendor/acorn.cjs
 var require_acorn = __commonJS(function(exports, module) {
   /*! Acorn 8.16.0 — MIT License
    * Copyright (C) 2012-2022 by various contributors (see AUTHORS)
@@ -22510,12 +22510,12 @@ Defaulting to 2020, but this will stop working in the future.`);
   });
 });
 
-// ../clawgod-max/src/generic/patcher/entry.mjs
+// src/generic/patcher/entry.mjs
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "fs";
 import { dirname as dirname2, isAbsolute as isAbsolute2, join as join2 } from "path";
 import { fileURLToPath } from "url";
 
-// ../clawgod-max/src/generic/enhancement-config.mjs
+// src/generic/enhancement-config.mjs
 import { randomUUID } from "crypto";
 import * as defaultFileSystem from "fs/promises";
 import { basename, dirname, isAbsolute, join } from "path";
@@ -23361,10 +23361,10 @@ async function readEnhancementConfig({
   }
 }
 
-// ../clawgod-max/src/generic/patcher/core.mjs
+// src/generic/patcher/core.mjs
 var import_acorn2 = __toESM(require_acorn(), 1);
 
-// ../clawgod-max/src/generic/patcher/runtime-features.mjs
+// src/generic/patcher/runtime-features.mjs
 var gate = (patchId) => `globalThis.__clawgodPatches?.[${JSON.stringify(patchId)}]!==!1`;
 var runtimeFeatureMetadata = Object.freeze({
   "classifier-fail-open": ["classifier-fail-open"],
@@ -23419,7 +23419,7 @@ var runtimeFeatureMetadata = Object.freeze({
   "message-filter-s8": ["message-filter"]
 });
 
-// ../clawgod-max/src/generic/patcher/semantic.mjs
+// src/generic/patcher/semantic.mjs
 var import_acorn = __toESM(require_acorn(), 1);
 var { parse } = import_acorn.default;
 var AST_PATCH_IDS = [
@@ -23625,7 +23625,7 @@ function applyAstEdits(code, edits) {
   return parts.join("");
 }
 
-// ../clawgod-max/src/generic/patcher/ast-anchors.mjs
+// src/generic/patcher/ast-anchors.mjs
 var ANCHOR_PATCH_IDS = Object.freeze([
   "auto-mode-helper-gate",
   "auto-mode-inline-gate",
@@ -23919,7 +23919,7 @@ function scanAstAnchors(code, { tree = parsePatchSource(code), ids = ANCHOR_PATC
   return results;
 }
 
-// ../clawgod-max/src/generic/patcher/terminal-reply-delay.mjs
+// src/generic/patcher/terminal-reply-delay.mjs
 function terminalReplyDelay(querier, reader, now) {
   const parse = reader?.parse;
   if (parse?.mode !== "NORMAL" || typeof parse.incomplete !== "string")
@@ -23933,7 +23933,7 @@ function terminalReplyDelay(querier, reader, now) {
   return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
 }
 
-// ../clawgod-max/src/generic/patcher/ast-anchors2/core.mjs
+// src/generic/patcher/ast-anchors2/core.mjs
 var CONTEXT_LIMIT_ID = "context-limit-ast";
 var TERMINAL_REPLY_ID = "terminal-reply-ast";
 var ENV_EXPR = "(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||+process.env.CLAUDE_CODE_MAX_CONTEXT_TOKENS||200000)";
@@ -24185,7 +24185,7 @@ var visitors = [
   }
 ];
 
-// ../clawgod-max/src/generic/patcher/ast-anchors2/chrome.mjs
+// src/generic/patcher/ast-anchors2/chrome.mjs
 var ID = "chrome-agents-config-ast";
 var REQUIRED = ["addDir", "pluginDir", "pluginDirNoMcp", "settings", "mcpConfig", "strictMcpConfig"];
 var emptyArray = (node) => node?.type === "ArrayExpression" && node.elements.length === 0;
@@ -24243,7 +24243,7 @@ var visitors2 = [{
   }
 }];
 
-// ../clawgod-max/src/generic/patcher/ast-anchors2/agents.mjs
+// src/generic/patcher/ast-anchors2/agents.mjs
 var ID2 = "agents-session-metadata-ast";
 var MARKER = "/*__clawgod_agents_session_id__*/";
 var DEBUG_FLAGS = [
@@ -24398,7 +24398,7 @@ var visitors3 = [{
   }
 }];
 
-// ../clawgod-max/src/generic/patcher/ast-anchors2/index.mjs
+// src/generic/patcher/ast-anchors2/index.mjs
 var ALL_VISITORS = Object.freeze([...visitors, ...visitors2, ...visitors3]);
 var BATCH2_ANCHOR_IDS = Object.freeze(ALL_VISITORS.map((visitor) => visitor.id));
 if (new Set(BATCH2_ANCHOR_IDS).size !== BATCH2_ANCHOR_IDS.length) {
@@ -24453,7 +24453,7 @@ function scanBatch2Anchors(code, { tree = parsePatchSource(code), ids = BATCH2_A
   return results;
 }
 
-// ../clawgod-max/src/generic/patcher/semantic-runner.mjs
+// src/generic/patcher/semantic-runner.mjs
 var MODULE_SEPARATOR = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
@@ -24524,7 +24524,7 @@ function applySemanticPatch(source, options = {}) {
   return { ...result.results.get(descriptor), code: result.code };
 }
 
-// ../clawgod-max/src/generic/patcher/core.mjs
+// src/generic/patcher/core.mjs
 async function loadAcorn() {
   return import_acorn2.default;
 }
@@ -24782,7 +24782,7 @@ var coreRegistry = Object.freeze({
   customPatches: Object.freeze(customPatches)
 });
 
-// ../clawgod-max/src/generic/enhancements.json
+// src/generic/enhancements.json
 var enhancements_default = `[
   { "id": "chrome", "kind": "patch" },
   { "id": "computer-use", "kind": "patch" },
@@ -24808,7 +24808,7 @@ var enhancements_default = `[
 ]
 `;
 
-// ../clawgod-max/src/generic/patcher/enhancements/voice-asr-cometix.js
+// src/generic/patcher/enhancements/voice-asr-cometix.js
 var voice_asr_cometix_default = `// Upstream: CometixSpace/claude-code @ 68fd5465eb631ff8180631f37ca0046a2b38c85a
 // patcher/payloads/voice-asr-cometix.js; ClawGod adapts vendor lookup and display snapshots.
 async function __ccppAsrConnect(e, t) {
@@ -25173,7 +25173,7 @@ return __api;
 }
 `;
 
-// ../clawgod-max/src/generic/patcher/enhancements/cometix.mjs
+// src/generic/patcher/enhancements/cometix.mjs
 var separator = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
@@ -25444,7 +25444,7 @@ function extendWithCometix(registry) {
   return Object.freeze({ ...registry, customPatches: Object.freeze([...registry.customPatches, ...cometixPatches.filter((p) => p.enhancement === registry.id)]) });
 }
 
-// ../clawgod-max/src/generic/patcher/enhancements/agents.mjs
+// src/generic/patcher/enhancements/agents.mjs
 var agentTeamsPatch = {
   order: 5,
   name: "Agent Teams always enabled",
@@ -25535,7 +25535,7 @@ function createAgentsRegistry({ chromeEnabled }) {
   });
 }
 
-// ../clawgod-max/src/generic/patcher/enhancements/auto-mode.mjs
+// src/generic/patcher/enhancements/auto-mode.mjs
 var patches2 = [
   {
     order: 26,
@@ -25592,7 +25592,7 @@ var autoModeRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/branding.mjs
+// src/generic/patcher/enhancements/branding.mjs
 var patches3 = [
   {
     order: 30,
@@ -25681,7 +25681,7 @@ var brandingRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/chrome.mjs
+// src/generic/patcher/enhancements/chrome.mjs
 function isChromeClientFactory(node) {
   let bodyStatements;
   if (node.body?.type === "BlockStatement")
@@ -25924,7 +25924,7 @@ var chromeRegistry = Object.freeze({
   customPatches: Object.freeze(customPatches2)
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/computer-use.mjs
+// src/generic/patcher/enhancements/computer-use.mjs
 var patches5 = [
   {
     order: 17,
@@ -25971,7 +25971,7 @@ var computerUseRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/design-canvas.mjs
+// src/generic/patcher/enhancements/design-canvas.mjs
 var patches6 = [
   {
     order: 65,
@@ -25998,7 +25998,7 @@ var designCanvasRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/paste-images.mjs
+// src/generic/patcher/enhancements/paste-images.mjs
 var patches7 = [
   {
     order: 42,
@@ -26039,7 +26039,7 @@ var pasteImagesRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/planning.mjs
+// src/generic/patcher/enhancements/planning.mjs
 var patches8 = [
   {
     order: 19,
@@ -26083,7 +26083,7 @@ var planningRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/privacy.mjs
+// src/generic/patcher/enhancements/privacy.mjs
 var patches9 = [
   {
     order: 47,
@@ -26121,7 +26121,7 @@ var privacyRegistry = Object.freeze({
   }])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/unrestricted-tools.mjs
+// src/generic/patcher/enhancements/unrestricted-tools.mjs
 var patches10 = [
   {
     order: 0,
@@ -26199,7 +26199,7 @@ var unrestrictedToolsRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// ../clawgod-max/src/generic/patcher/enhancements/voice.mjs
+// src/generic/patcher/enhancements/voice.mjs
 var patches11 = [{
   order: 25,
   name: "Voice Mode enable (bypass GrowthBook kill)",
@@ -26310,7 +26310,7 @@ var voiceRegistry = Object.freeze({
   customPatches: Object.freeze([voiceHoldInput])
 });
 
-// ../clawgod-max/src/generic/patcher/registry.mjs
+// src/generic/patcher/registry.mjs
 var coreRegistry2 = extendWithCometix(coreRegistry);
 var enhancementManifest = loadEnhancementManifest(enhancements_default, { filename: "enhancements.json" });
 var patchIds = enhancementManifest.filter((entry) => entry.kind === "patch").map((entry) => entry.id);
@@ -26386,7 +26386,7 @@ function createPatchSelection(enabled) {
   });
 }
 
-// ../clawgod-max/src/generic/patcher/entry.mjs
+// src/generic/patcher/entry.mjs
 var PATCH_COMPATIBILITY_EXIT_CODE = 42;
 var DEFAULT_ROOT = dirname2(fileURLToPath(import.meta.url));
 var CHUNKS_DIRNAME = "chunks";
