@@ -7763,6 +7763,54 @@ const CELL_PLATFORM_SHAPES = [
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
     "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
+  // 2.1.303 win32：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function cs(n){", "digest": "07d0b4e7e418149f230a3335f4c84f7c6d1dfa47191edbfae721e06ab9c93cfd" },
+      { "header": "class rf{", "digest": "3945afebd3269f539227b3196a253b20b300f300bcaa4c1137ff8f5b99676b1a" },
+      { "header": "function l1(n,u,f,m){", "digest": "e8d1a9857c3a8f9cce6a30deef7e51daf8390fc1ccd16b443b5e4ea870a6ee47" },
+      { "header": "function bC(n,u,f,m,p,g,C){", "digest": "07a44b5d7d1b94e13961a0427d35f85422969d154a9e1628216934105104cf30" },
+      { "header": "function cd(n){", "digest": "2bd784b83d7b1b21c3ee2dfe949f535c278a149c7b52f07b36ca113eefe78b83" }
+    ],
+    "names": { "Ns": "cs", "Dd": "rf", "Cx": "l1", "xC": "bC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "Sn", "wo": "Er", "Xf": "Nd", "jn": "qn", "hht": "Mhe", "Rx": "a1", "xx": "r1", "bGt": "PMe", "LNr": "YEs", "MNr": "KEs", "C8": "sjo" },
+    "dependency": { "specifier": "B:/~BUN/root/chunk-q5ca2nsw.js", "digest": "dbbc7d982120cf81a436fdb23daf1fa065e144d402eaf89c4e4801b38d322ef0", "tokenizer": "RSs", "normalizeStyles": "e$n" },
+    "shared": { "specifier": "B:/~BUN/root/chunk-ervhay8x.js", "digest": "e310e01cc2b40cb31a28a56928abd46d1c74496df76dbb5d70081ea421ba3ccf", "factory": "pUn", "renderer": "chunk-1jz9m9yh.js", "text": "chunk-q0t5e1bx.js", "textDigest": "710185a6e3bbdc0032f5e495bdcf4a149e6bc74f119da8c931915e81c347309b", "textBranch": "if(!X.test(n))return h(N(n));" },
+    "tabAnchor": "let Ne=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let Ne=cd(Re);if(Ne.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Mhe)+Mhe)%Mhe;Ne=sjo([\" \".repeat(clawgodTabOffset)+Ne]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
+  // 2.1.303 linux：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function cs(n){", "digest": "857f79b80d8f7f22e9b32262a10f8a05c6d3ad93a35f43e7210f3f300d465779" },
+      { "header": "class rf{", "digest": "dc68497dd69047993dd5eab6c7d108363b131133ed82d3f0f86a205ce8337627" },
+      { "header": "function o1(n,u,f,m){", "digest": "af7b48413748a24effa0dd67457e0140ce9c05174be154e66c0512f4121a5681" },
+      { "header": "function yC(n,u,f,m,p,g,R){", "digest": "ea0b5258f6b002feb78873c78127375455c03526ff30e37cf9b560dc4383b95b" },
+      { "header": "function cd(n){", "digest": "ce7d485c38dfe9db1e6a6960927292dc9836c8a36b22b7f94314d215a0f93e8c" }
+    ],
+    "names": { "Ns": "cs", "Dd": "rf", "Cx": "o1", "xC": "yC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "Sn", "wo": "Er", "Xf": "Nd", "jn": "qn", "hht": "Rhe", "Rx": "r1", "xx": "i1", "bGt": "IMe", "LNr": "aEs", "MNr": "iEs", "C8": "ejo" },
+    "dependency": { "specifier": "/$bunfs/root/chunk-r0h9c0m4.js", "digest": "12c8762142dda2973b6fa8f2bc484c798e96b4263b7b38bc9a1db1b458bd459f", "tokenizer": "vSs", "normalizeStyles": "Y$n" },
+    "shared": { "specifier": "/$bunfs/root/chunk-a72qm4vf.js", "digest": "69e3b867a7cddbc99eeee6adc1fb1a58a9d4b5596dda8c85b9be858dda4e5905", "factory": "aUn", "renderer": "chunk-x66h7b21.js", "text": "chunk-720ca63b.js", "textDigest": "e8ea64bafcde8588c657e20f6728795d9850c1b75e839db94a626c57009a89fc", "textBranch": "if(!X.test(n))return v(N(n));" },
+    "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Rhe)+Rhe)%Rhe;we=ejo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
+  // 2.1.303 darwin：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function ds(n){", "digest": "8304d23ee54d505bc4dd8c551bc01bc221ce6f43b88219363d5afb7c693c0b40" },
+      { "header": "class rf{", "digest": "8043a742e809242754734c4c2338963ae45c96e0df1ae39d90d911389069cef6" },
+      { "header": "function r1(n,u,f,m){", "digest": "fc19d4eec03632d6409a8f16a2cd228c76e0831d431016fa5fb2a8188040c198" },
+      { "header": "function gC(n,u,f,m,p,g,C){", "digest": "72a86afc92612ea5af127c276b617a48dc5f6002554836f0d8437d1af305de9f" },
+      { "header": "function cd(n){", "digest": "37123aa2dcb6753d3e6d845fbb1f4f75fa4f6d67d557f8b253affbb878ed6208" }
+    ],
+    "names": { "Ns": "ds", "Dd": "rf", "Cx": "r1", "xC": "gC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "vn", "wo": "xr", "Xf": "Nd", "jn": "qn", "hht": "Hhe", "Rx": "l1", "xx": "o1", "bGt": "F0e", "LNr": "Vvs", "MNr": "zvs", "C8": "Ijo" },
+    "dependency": { "specifier": "/$bunfs/root/chunk-g6xf6pc1.js", "digest": "9b23ff160a68314fed759d6e79528fb62ecbba25359a861bc9fcbbfccac927a8", "tokenizer": "aws", "normalizeStyles": "m$n" },
+    "shared": { "specifier": "/$bunfs/root/chunk-pn1hx324.js", "digest": "d197ecd2cf0d5be7ced54fd9a4259ec1ca7d4a30032d9575284582565f17a9d3", "factory": "AUn", "renderer": "chunk-7mzb8nrq.js", "text": "chunk-rq2baena.js", "textDigest": "b0c728b05c97fa8386616b7b8b20d7d9e6a61e18edc838d6062e74ffbc264689", "textBranch": "if(!X.test(n))return M(N(n));" },
+    "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
 ];
 
 // Every name the injected source introduces must be free in the target module;

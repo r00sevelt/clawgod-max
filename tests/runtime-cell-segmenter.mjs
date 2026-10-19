@@ -479,6 +479,9 @@ for (const [version, platform, chunk, tokenizer, normalize, names, arrayTabs = f
   ['2.1.302', 'darwin', 'chunk-h7pqjkwe.js', 'aws', 'm$n', { Ns: 'ds', Dd: 'rf', Cx: 'r1', xC: 'gC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'vn', wo: 'xr', Xf: 'Nd', jn: 'qn', hht: 'Hhe', Rx: 'l1', xx: 'o1', bGt: 'F0e', LNr: 'Vvs', MNr: 'zvs', C8: 'Ijo' }, true, 'chunk-9bpwkp0k.js'],
   ['2.1.302', 'linux', 'chunk-2p6bc6n4.js', 'vSs', 'Y$n', { Ns: 'cs', Dd: 'rf', Cx: 'o1', xC: 'yC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'Sn', wo: 'Er', Xf: 'Nd', jn: 'qn', hht: 'Rhe', Rx: 'r1', xx: 'i1', bGt: 'IMe', LNr: 'aEs', MNr: 'iEs', C8: 'ejo' }, true, 'chunk-stw100w7.js'],
   ['2.1.302', 'win32', 'chunk-zk5r3sp1.js', 'RSs', 'e$n', { Ns: 'cs', Dd: 'rf', Cx: 'l1', xC: 'bC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'Sn', wo: 'Er', Xf: 'Nd', jn: 'qn', hht: 'Mhe', Rx: 'a1', xx: 'r1', bGt: 'PMe', LNr: 'YEs', MNr: 'KEs', C8: 'sjo' }, true, 'chunk-cz9nz8bx.js'],
+  ['2.1.303', 'darwin', 'chunk-g6xf6pc1.js', 'aws', 'm$n', { Ns: 'ds', Dd: 'rf', Cx: 'r1', xC: 'gC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'vn', wo: 'xr', Xf: 'Nd', jn: 'qn', hht: 'Hhe', Rx: 'l1', xx: 'o1', bGt: 'F0e', LNr: 'Vvs', MNr: 'zvs', C8: 'Ijo' }, true, 'chunk-pn1hx324.js'],
+  ['2.1.303', 'linux', 'chunk-r0h9c0m4.js', 'vSs', 'Y$n', { Ns: 'cs', Dd: 'rf', Cx: 'o1', xC: 'yC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'Sn', wo: 'Er', Xf: 'Nd', jn: 'qn', hht: 'Rhe', Rx: 'r1', xx: 'i1', bGt: 'IMe', LNr: 'aEs', MNr: 'iEs', C8: 'ejo' }, true, 'chunk-a72qm4vf.js'],
+  ['2.1.303', 'win32', 'chunk-q5ca2nsw.js', 'RSs', 'e$n', { Ns: 'cs', Dd: 'rf', Cx: 'l1', xC: 'bC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'cd', bn: 'Sn', wo: 'Er', Xf: 'Nd', jn: 'qn', hht: 'Mhe', Rx: 'a1', xx: 'r1', bGt: 'PMe', LNr: 'YEs', MNr: 'KEs', C8: 'sjo' }, true, 'chunk-ervhay8x.js'],
   ['2.1.301', 'darwin', 'chunk-ahaek174.js', 'g_s', 'qNn', { Ns: 'ps', Dd: 'uf', Cx: 'n1', xC: 'mC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'md', bn: 'vn', wo: 'Ar', Xf: 'Od', jn: 'Vn', hht: 'Zge', Rx: 'i1', xx: 't1', bGt: 'f0e', LNr: 'tws', MNr: 'ews', C8: 'bUo' }, true, 'chunk-5fz1rmt8.js'],
   ['2.1.301', 'linux', 'chunk-v75f1y8v.js', 'Pys', 'RNn', { Ns: 'ps', Dd: 'uf', Cx: 'r1', xC: 'yC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'md', bn: 'bn', wo: 'Ar', Xf: 'Od', jn: 'Vn', hht: 'Kge', Rx: 'l1', xx: 'i1', bGt: 'iMe', LNr: 'hSs', MNr: 'gSs', C8: 'WFo' }, true, 'chunk-0f9arzew.js'],
   ['2.1.301', 'win32', 'chunk-weqngj1f.js', 'Fys', 'LFn', { Ns: 'ps', Dd: 'uf', Cx: 'i1', xC: 'pC', cmr: 'clawgodAnsiTokens', Kf: 'clawgodMergeStyles', Dc: 'md', bn: 'bn', wo: 'Ar', Xf: 'Od', jn: 'Vn', hht: 'Qge', Rx: 'o1', xx: 'n1', bGt: 'iMe', LNr: 'wSs', MNr: 'SSs', C8: 'X$o' }, true, 'chunk-6fj7dxav.js'],
@@ -554,7 +557,7 @@ for (const [version, platform, chunk, tokenizer, normalize, names, arrayTabs = f
     const declarations = ast.body.filter(node => ['FunctionDeclaration', 'ClassDeclaration', 'VariableDeclaration'].includes(node.type)
       && (version === '2.1.299' ? [names.Ns, names.Dd, names.Cx, names.xC, 'clawgodMergeStyles'].includes(node.id?.name) || node.id?.name?.startsWith('clawgod') || node.declarations?.some(item => item.id?.name?.startsWith('clawgod')) || ['sanitizeControlSequences', 'parseStyledText', 'packCell', 'unionDamage', 'writeCell', 'paintCells'].includes(node.id?.name) : node.id?.name !== names.Dc && node.id?.name !== 'tabClip'))
       .map(node => adapted.slice(node.start, node.end)).join('\n');
-    const directionHelpers = version === '2.1.302'
+    const directionHelpers = ['2.1.302', '2.1.303'].includes(version)
       ? `function lf(value){return value!==undefined}function ${platform === 'darwin' ? 'Dl' : 'wl'}(){return false}const Ob={ltr:"\\u200e",rtl:"\\u200f"};`
       : version === '2.1.301'
       ? 'function cf(value){return value!==undefined}function zl(){return false}const _b={ltr:"\\u200e",rtl:"\\u200f"};'
@@ -569,7 +572,7 @@ for (const [version, platform, chunk, tokenizer, normalize, names, arrayTabs = f
     assert.deepEqual(screen.stylesAt(8), []);
     assert.equal(screen.hyperlinkAt(8), 'https://example.com');
     assert.equal(line.width('中\tA', 0), 9);
-    if (['2.1.300', '2.1.301', '2.1.302'].includes(version)) {
+    if (['2.1.300', '2.1.301', '2.1.302', '2.1.303'].includes(version)) {
       const directed = createScreen(styles, 20);
       assert.equal(actual.paint(directed, '中A', 0, 0, line, 'ltr'), 3);
       assert.equal(directed.char(0), '中');
@@ -604,6 +607,9 @@ for (const [version, platform, sharedChunk, ansiChunk, textChunk, factory, textF
   ['2.1.302', 'darwin', 'chunk-9bpwkp0k.js', 'chunk-h7pqjkwe.js', 'chunk-kkq7q3vx.js', 'AUn', 'O', 'Hm', 'PMe'],
   ['2.1.302', 'linux', 'chunk-stw100w7.js', 'chunk-2p6bc6n4.js', 'chunk-jnazex8d.js', 'aUn', 'O', 'Hm', 'EHe'],
   ['2.1.302', 'win32', 'chunk-cz9nz8bx.js', 'chunk-zk5r3sp1.js', 'chunk-xw69qbhq.js', 'pUn', 'O', 'Lm', 'v0e'],
+  ['2.1.303', 'darwin', 'chunk-pn1hx324.js', 'chunk-g6xf6pc1.js', 'chunk-rq2baena.js', 'AUn', 'O', 'Hm', 'PMe'],
+  ['2.1.303', 'linux', 'chunk-a72qm4vf.js', 'chunk-r0h9c0m4.js', 'chunk-720ca63b.js', 'aUn', 'O', 'Hm', 'EHe'],
+  ['2.1.303', 'win32', 'chunk-ervhay8x.js', 'chunk-q5ca2nsw.js', 'chunk-q0t5e1bx.js', 'pUn', 'O', 'Lm', 'v0e'],
   ['2.1.301', 'darwin', 'chunk-5fz1rmt8.js', 'chunk-ahaek174.js', 'chunk-fbmnw6hb.js', 'i$n', 'N', 'US', 'gOe'],
   ['2.1.301', 'linux', 'chunk-0f9arzew.js', 'chunk-v75f1y8v.js', 'chunk-hn071sw0.js', 'B$n', 'N', 'Fb', 'lOe'],
   ['2.1.301', 'win32', 'chunk-6fj7dxav.js', 'chunk-weqngj1f.js', 'chunk-jx9wxmsd.js', 'KHn', 'N', 'Ub', 'lIe'],

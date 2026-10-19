@@ -15228,6 +15228,54 @@ const CELL_PLATFORM_SHAPES = [
     "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
     "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
   },
+  // 2.1.303 win32：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function cs(n){", "digest": "07d0b4e7e418149f230a3335f4c84f7c6d1dfa47191edbfae721e06ab9c93cfd" },
+      { "header": "class rf{", "digest": "3945afebd3269f539227b3196a253b20b300f300bcaa4c1137ff8f5b99676b1a" },
+      { "header": "function l1(n,u,f,m){", "digest": "e8d1a9857c3a8f9cce6a30deef7e51daf8390fc1ccd16b443b5e4ea870a6ee47" },
+      { "header": "function bC(n,u,f,m,p,g,C){", "digest": "07a44b5d7d1b94e13961a0427d35f85422969d154a9e1628216934105104cf30" },
+      { "header": "function cd(n){", "digest": "2bd784b83d7b1b21c3ee2dfe949f535c278a149c7b52f07b36ca113eefe78b83" }
+    ],
+    "names": { "Ns": "cs", "Dd": "rf", "Cx": "l1", "xC": "bC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "Sn", "wo": "Er", "Xf": "Nd", "jn": "qn", "hht": "Mhe", "Rx": "a1", "xx": "r1", "bGt": "PMe", "LNr": "YEs", "MNr": "KEs", "C8": "sjo" },
+    "dependency": { "specifier": "B:/~BUN/root/chunk-q5ca2nsw.js", "digest": "dbbc7d982120cf81a436fdb23daf1fa065e144d402eaf89c4e4801b38d322ef0", "tokenizer": "RSs", "normalizeStyles": "e$n" },
+    "shared": { "specifier": "B:/~BUN/root/chunk-ervhay8x.js", "digest": "e310e01cc2b40cb31a28a56928abd46d1c74496df76dbb5d70081ea421ba3ccf", "factory": "pUn", "renderer": "chunk-1jz9m9yh.js", "text": "chunk-q0t5e1bx.js", "textDigest": "710185a6e3bbdc0032f5e495bdcf4a149e6bc74f119da8c931915e81c347309b", "textBranch": "if(!X.test(n))return h(N(n));" },
+    "tabAnchor": "let Ne=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let Ne=cd(Re);if(Ne.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Mhe)+Mhe)%Mhe;Ne=sjo([\" \".repeat(clawgodTabOffset)+Ne]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function bC(n,u,f,m,p,g,C){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
+  // 2.1.303 linux：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function cs(n){", "digest": "857f79b80d8f7f22e9b32262a10f8a05c6d3ad93a35f43e7210f3f300d465779" },
+      { "header": "class rf{", "digest": "dc68497dd69047993dd5eab6c7d108363b131133ed82d3f0f86a205ce8337627" },
+      { "header": "function o1(n,u,f,m){", "digest": "af7b48413748a24effa0dd67457e0140ce9c05174be154e66c0512f4121a5681" },
+      { "header": "function yC(n,u,f,m,p,g,R){", "digest": "ea0b5258f6b002feb78873c78127375455c03526ff30e37cf9b560dc4383b95b" },
+      { "header": "function cd(n){", "digest": "ce7d485c38dfe9db1e6a6960927292dc9836c8a36b22b7f94314d215a0f93e8c" }
+    ],
+    "names": { "Ns": "cs", "Dd": "rf", "Cx": "o1", "xC": "yC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "Sn", "wo": "Er", "Xf": "Nd", "jn": "qn", "hht": "Rhe", "Rx": "r1", "xx": "i1", "bGt": "IMe", "LNr": "aEs", "MNr": "iEs", "C8": "ejo" },
+    "dependency": { "specifier": "/$bunfs/root/chunk-r0h9c0m4.js", "digest": "12c8762142dda2973b6fa8f2bc484c798e96b4263b7b38bc9a1db1b458bd459f", "tokenizer": "vSs", "normalizeStyles": "Y$n" },
+    "shared": { "specifier": "/$bunfs/root/chunk-a72qm4vf.js", "digest": "69e3b867a7cddbc99eeee6adc1fb1a58a9d4b5596dda8c85b9be858dda4e5905", "factory": "aUn", "renderer": "chunk-x66h7b21.js", "text": "chunk-720ca63b.js", "textDigest": "e8ea64bafcde8588c657e20f6728795d9850c1b75e839db94a626c57009a89fc", "textBranch": "if(!X.test(n))return v(N(n));" },
+    "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Rhe)+Rhe)%Rhe;we=ejo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function yC(n,u,f,m,p,g,R){let T=lf(g)?Ob[g]+u:u;if(p.segment(T,wl()),R!==void 0)f=p.keepColumns(f,R.x1,R.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
+  // 2.1.303 darwin：302 声明逐字节不变，仅依赖/共享/文本分块换名（clawgod-max）。
+  {
+    "shape": [
+      { "header": "function ds(n){", "digest": "8304d23ee54d505bc4dd8c551bc01bc221ce6f43b88219363d5afb7c693c0b40" },
+      { "header": "class rf{", "digest": "8043a742e809242754734c4c2338963ae45c96e0df1ae39d90d911389069cef6" },
+      { "header": "function r1(n,u,f,m){", "digest": "fc19d4eec03632d6409a8f16a2cd228c76e0831d431016fa5fb2a8188040c198" },
+      { "header": "function gC(n,u,f,m,p,g,C){", "digest": "72a86afc92612ea5af127c276b617a48dc5f6002554836f0d8437d1af305de9f" },
+      { "header": "function cd(n){", "digest": "37123aa2dcb6753d3e6d845fbb1f4f75fa4f6d67d557f8b253affbb878ed6208" }
+    ],
+    "names": { "Ns": "ds", "Dd": "rf", "Cx": "r1", "xC": "gC", "cmr": "clawgodAnsiTokens", "Kf": "clawgodMergeStyles", "Dc": "cd", "bn": "vn", "wo": "xr", "Xf": "Nd", "jn": "qn", "hht": "Hhe", "Rx": "l1", "xx": "o1", "bGt": "F0e", "LNr": "Vvs", "MNr": "zvs", "C8": "Ijo" },
+    "dependency": { "specifier": "/$bunfs/root/chunk-g6xf6pc1.js", "digest": "9b23ff160a68314fed759d6e79528fb62ecbba25359a861bc9fcbbfccac927a8", "tokenizer": "aws", "normalizeStyles": "m$n" },
+    "shared": { "specifier": "/$bunfs/root/chunk-pn1hx324.js", "digest": "d197ecd2cf0d5be7ced54fd9a4259ec1ca7d4a30032d9575284582565f17a9d3", "factory": "AUn", "renderer": "chunk-7mzb8nrq.js", "text": "chunk-rq2baena.js", "textDigest": "b0c728b05c97fa8386616b7b8b20d7d9e6a61e18edc838d6062e74ffbc264689", "textBranch": "if(!X.test(n))return M(N(n));" },
+    "tabAnchor": "let we=cd(Re),Te=Y.x2-W",
+    "tabReplacement": "let we=cd(Re);if(we.indexOf(String.fromCharCode(9))>=0){let clawgodTabOffset=((W%Hhe)+Hhe)%Hhe;we=Ijo([\" \".repeat(clawgodTabOffset)+we]).join(\"\").slice(clawgodTabOffset)}let Te=Y.x2-W",
+    "writeLineSource": "function gC(n,u,f,m,p,g,C){let M=lf(g)?Ob[g]+u:u;if(p.segment(M,Dl()),C!==void 0)f=p.keepColumns(f,C.x1,C.x2);return p.count===0?f:paintCells(n,p.cells,f,m)}"
+  },
 ];
 
 // Every name the injected source introduces must be free in the target module;
@@ -17112,7 +17160,7 @@ var __toESM = (mod, isNodeMode, target) => {
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
 
-// src/generic/patcher/vendor/acorn.cjs
+// ../clawgod-max/src/generic/patcher/vendor/acorn.cjs
 var require_acorn = __commonJS(function(exports, module) {
   /*! Acorn 8.16.0 — MIT License
    * Copyright (C) 2012-2022 by various contributors (see AUTHORS)
@@ -22462,12 +22510,12 @@ Defaulting to 2020, but this will stop working in the future.`);
   });
 });
 
-// src/generic/patcher/entry.mjs
+// ../clawgod-max/src/generic/patcher/entry.mjs
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "fs";
 import { dirname as dirname2, isAbsolute as isAbsolute2, join as join2 } from "path";
 import { fileURLToPath } from "url";
 
-// src/generic/enhancement-config.mjs
+// ../clawgod-max/src/generic/enhancement-config.mjs
 import { randomUUID } from "crypto";
 import * as defaultFileSystem from "fs/promises";
 import { basename, dirname, isAbsolute, join } from "path";
@@ -23313,10 +23361,10 @@ async function readEnhancementConfig({
   }
 }
 
-// src/generic/patcher/core.mjs
+// ../clawgod-max/src/generic/patcher/core.mjs
 var import_acorn2 = __toESM(require_acorn(), 1);
 
-// src/generic/patcher/runtime-features.mjs
+// ../clawgod-max/src/generic/patcher/runtime-features.mjs
 var gate = (patchId) => `globalThis.__clawgodPatches?.[${JSON.stringify(patchId)}]!==!1`;
 var runtimeFeatureMetadata = Object.freeze({
   "classifier-fail-open": ["classifier-fail-open"],
@@ -23371,7 +23419,7 @@ var runtimeFeatureMetadata = Object.freeze({
   "message-filter-s8": ["message-filter"]
 });
 
-// src/generic/patcher/semantic.mjs
+// ../clawgod-max/src/generic/patcher/semantic.mjs
 var import_acorn = __toESM(require_acorn(), 1);
 var { parse } = import_acorn.default;
 var AST_PATCH_IDS = [
@@ -23577,7 +23625,7 @@ function applyAstEdits(code, edits) {
   return parts.join("");
 }
 
-// src/generic/patcher/ast-anchors.mjs
+// ../clawgod-max/src/generic/patcher/ast-anchors.mjs
 var ANCHOR_PATCH_IDS = Object.freeze([
   "auto-mode-helper-gate",
   "auto-mode-inline-gate",
@@ -23871,7 +23919,7 @@ function scanAstAnchors(code, { tree = parsePatchSource(code), ids = ANCHOR_PATC
   return results;
 }
 
-// src/generic/patcher/terminal-reply-delay.mjs
+// ../clawgod-max/src/generic/patcher/terminal-reply-delay.mjs
 function terminalReplyDelay(querier, reader, now) {
   const parse = reader?.parse;
   if (parse?.mode !== "NORMAL" || typeof parse.incomplete !== "string")
@@ -23885,7 +23933,7 @@ function terminalReplyDelay(querier, reader, now) {
   return Math.max(0, 2000 - Math.max(0, now - reader.lastInputAt));
 }
 
-// src/generic/patcher/ast-anchors2/core.mjs
+// ../clawgod-max/src/generic/patcher/ast-anchors2/core.mjs
 var CONTEXT_LIMIT_ID = "context-limit-ast";
 var TERMINAL_REPLY_ID = "terminal-reply-ast";
 var ENV_EXPR = "(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||+process.env.CLAUDE_CODE_MAX_CONTEXT_TOKENS||200000)";
@@ -24137,7 +24185,7 @@ var visitors = [
   }
 ];
 
-// src/generic/patcher/ast-anchors2/chrome.mjs
+// ../clawgod-max/src/generic/patcher/ast-anchors2/chrome.mjs
 var ID = "chrome-agents-config-ast";
 var REQUIRED = ["addDir", "pluginDir", "pluginDirNoMcp", "settings", "mcpConfig", "strictMcpConfig"];
 var emptyArray = (node) => node?.type === "ArrayExpression" && node.elements.length === 0;
@@ -24195,7 +24243,7 @@ var visitors2 = [{
   }
 }];
 
-// src/generic/patcher/ast-anchors2/agents.mjs
+// ../clawgod-max/src/generic/patcher/ast-anchors2/agents.mjs
 var ID2 = "agents-session-metadata-ast";
 var MARKER = "/*__clawgod_agents_session_id__*/";
 var DEBUG_FLAGS = [
@@ -24350,7 +24398,7 @@ var visitors3 = [{
   }
 }];
 
-// src/generic/patcher/ast-anchors2/index.mjs
+// ../clawgod-max/src/generic/patcher/ast-anchors2/index.mjs
 var ALL_VISITORS = Object.freeze([...visitors, ...visitors2, ...visitors3]);
 var BATCH2_ANCHOR_IDS = Object.freeze(ALL_VISITORS.map((visitor) => visitor.id));
 if (new Set(BATCH2_ANCHOR_IDS).size !== BATCH2_ANCHOR_IDS.length) {
@@ -24405,7 +24453,7 @@ function scanBatch2Anchors(code, { tree = parsePatchSource(code), ids = BATCH2_A
   return results;
 }
 
-// src/generic/patcher/semantic-runner.mjs
+// ../clawgod-max/src/generic/patcher/semantic-runner.mjs
 var MODULE_SEPARATOR = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
@@ -24476,7 +24524,7 @@ function applySemanticPatch(source, options = {}) {
   return { ...result.results.get(descriptor), code: result.code };
 }
 
-// src/generic/patcher/core.mjs
+// ../clawgod-max/src/generic/patcher/core.mjs
 async function loadAcorn() {
   return import_acorn2.default;
 }
@@ -24734,7 +24782,7 @@ var coreRegistry = Object.freeze({
   customPatches: Object.freeze(customPatches)
 });
 
-// src/generic/enhancements.json
+// ../clawgod-max/src/generic/enhancements.json
 var enhancements_default = `[
   { "id": "chrome", "kind": "patch" },
   { "id": "computer-use", "kind": "patch" },
@@ -24760,7 +24808,7 @@ var enhancements_default = `[
 ]
 `;
 
-// src/generic/patcher/enhancements/voice-asr-cometix.js
+// ../clawgod-max/src/generic/patcher/enhancements/voice-asr-cometix.js
 var voice_asr_cometix_default = `// Upstream: CometixSpace/claude-code @ 68fd5465eb631ff8180631f37ca0046a2b38c85a
 // patcher/payloads/voice-asr-cometix.js; ClawGod adapts vendor lookup and display snapshots.
 async function __ccppAsrConnect(e, t) {
@@ -25125,7 +25173,7 @@ return __api;
 }
 `;
 
-// src/generic/patcher/enhancements/cometix.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/cometix.mjs
 var separator = `
 /*__CLAWGOD_MODULE_BOUNDARY__*/
 `;
@@ -25396,7 +25444,7 @@ function extendWithCometix(registry) {
   return Object.freeze({ ...registry, customPatches: Object.freeze([...registry.customPatches, ...cometixPatches.filter((p) => p.enhancement === registry.id)]) });
 }
 
-// src/generic/patcher/enhancements/agents.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/agents.mjs
 var agentTeamsPatch = {
   order: 5,
   name: "Agent Teams always enabled",
@@ -25487,7 +25535,7 @@ function createAgentsRegistry({ chromeEnabled }) {
   });
 }
 
-// src/generic/patcher/enhancements/auto-mode.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/auto-mode.mjs
 var patches2 = [
   {
     order: 26,
@@ -25544,7 +25592,7 @@ var autoModeRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/branding.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/branding.mjs
 var patches3 = [
   {
     order: 30,
@@ -25633,7 +25681,7 @@ var brandingRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/chrome.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/chrome.mjs
 function isChromeClientFactory(node) {
   let bodyStatements;
   if (node.body?.type === "BlockStatement")
@@ -25876,7 +25924,7 @@ var chromeRegistry = Object.freeze({
   customPatches: Object.freeze(customPatches2)
 });
 
-// src/generic/patcher/enhancements/computer-use.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/computer-use.mjs
 var patches5 = [
   {
     order: 17,
@@ -25923,7 +25971,7 @@ var computerUseRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/design-canvas.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/design-canvas.mjs
 var patches6 = [
   {
     order: 65,
@@ -25950,7 +25998,7 @@ var designCanvasRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/paste-images.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/paste-images.mjs
 var patches7 = [
   {
     order: 42,
@@ -25991,7 +26039,7 @@ var pasteImagesRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/planning.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/planning.mjs
 var patches8 = [
   {
     order: 19,
@@ -26035,7 +26083,7 @@ var planningRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/privacy.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/privacy.mjs
 var patches9 = [
   {
     order: 47,
@@ -26073,7 +26121,7 @@ var privacyRegistry = Object.freeze({
   }])
 });
 
-// src/generic/patcher/enhancements/unrestricted-tools.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/unrestricted-tools.mjs
 var patches10 = [
   {
     order: 0,
@@ -26151,7 +26199,7 @@ var unrestrictedToolsRegistry = Object.freeze({
   customPatches: Object.freeze([])
 });
 
-// src/generic/patcher/enhancements/voice.mjs
+// ../clawgod-max/src/generic/patcher/enhancements/voice.mjs
 var patches11 = [{
   order: 25,
   name: "Voice Mode enable (bypass GrowthBook kill)",
@@ -26262,7 +26310,7 @@ var voiceRegistry = Object.freeze({
   customPatches: Object.freeze([voiceHoldInput])
 });
 
-// src/generic/patcher/registry.mjs
+// ../clawgod-max/src/generic/patcher/registry.mjs
 var coreRegistry2 = extendWithCometix(coreRegistry);
 var enhancementManifest = loadEnhancementManifest(enhancements_default, { filename: "enhancements.json" });
 var patchIds = enhancementManifest.filter((entry) => entry.kind === "patch").map((entry) => entry.id);
@@ -26338,7 +26386,7 @@ function createPatchSelection(enabled) {
   });
 }
 
-// src/generic/patcher/entry.mjs
+// ../clawgod-max/src/generic/patcher/entry.mjs
 var PATCH_COMPATIBILITY_EXIT_CODE = 42;
 var DEFAULT_ROOT = dirname2(fileURLToPath(import.meta.url));
 var CHUNKS_DIRNAME = "chunks";
