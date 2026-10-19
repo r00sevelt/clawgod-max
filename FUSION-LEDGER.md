@@ -131,4 +131,5 @@
 - **实现**：`post-processor.mjs` 新增 win32/linux/darwin 三条 2.1.303 档案；新增 12 个真实夹具；`runtime-cell-segmenter` 表加 303 三行并扩展方向/裁剪断言。源提交 `1bc1543`。
 - **dist 工具链教训**：dist 必须由 CI 的 Ubuntu + Bun `1.4.4-canary.1+6bb5dc195` 生成。Windows 本机即使 revision 相同，patcher bundle 仍有字节漂移；用 Windows canary 对已绿的 `a94fe48` 重跑 `build.mjs --check` 也会 stale。修复方式：临时分支 + GitHub Actions 生成 artifact，提交 `cc221ce`（仅两个 dist 文件，install.sh 31/31 行、install.ps1 1 行）。
 - **状态**：run `39231095262` 三 job 全绿；Linux/macOS/Windows 均实装 2.1.303，version equality 通过，patch summary 0 failed，卸载清理通过；badge 更新 2.1.303。
+- **发布**：v0.2.1（tag `012ae16`）→ Release run `39233412797` success；4 个核心资产 + 5 个 `clawgod-import-*` 工具（build-import run `39233412870` 五平台 success）。`install.sh` / `install.ps1` 版本注入 `0.2.1` 已核验；Release notes 已替换为中文版。
 - **教训**：不要把“本机 `build.mjs --check` 通过”当成发布前充分条件；dist 的 canonical 生产环境是 CI Ubuntu + 固定 canary，后续所有 dist 重建走同一工具链。
