@@ -123,3 +123,12 @@
 - **关键修正**：首版 fallback 门禁只比 `structuralModule` digest，2.1.299 的 `widthMask:vn → widthMask:unknown` 漂移被误判为新版本；`c02fb5f` 在 `CELL_STRUCTURAL_SHAPES` 三个 renderer 加 `topBindings` 指纹，digest 或顶层绑定指纹任一命中即拒绝 fallback。
 - **状态**：已推送；云端 Compat Daily run `39161778236` 三 job 全绿（Linux x64 / macOS ARM64 / windows-smoke）。提交 `8ec8660`（fallback）+ `c02fb5f`（2.1.299 家族指纹）。
 - **教训**：`structuralModule.digest` 对绑定改名不敏感，但对“把绑定换成自由全局”敏感；已知版本的 family guard 不能只看 digest，需要加一个顶层绑定指纹。
+
+## 2026-10-19：2.1.303 行格渲染器适配（三平台云端全绿）
+
+- **触发**：CC 2.1.303（npm 10-18 21:15 发布）行格渲染器形态变化，302 档案 fail-closed；探针 run `39222770767` 三平台均在 `installPublicCellRenderer` 拒绝安装。
+- **形态结论**：303 的五个声明（cs/ds、class rf、writeCell、writeLine、sanitize）与 302 逐字节相同；仅 content-hashed chunk 改名（dependency/shared/text）；具名 `tabClip` 消失但 `tabAnchor` 未变。因此只追加 3 条 2.1.303 冻结档案，不改 AST fallback / `frozenCellFamily` / `structuralModule`。
+- **实现**：`post-processor.mjs` 新增 win32/linux/darwin 三条 2.1.303 档案；新增 12 个真实夹具；`runtime-cell-segmenter` 表加 303 三行并扩展方向/裁剪断言。源提交 `1bc1543`。
+- **dist 工具链教训**：dist 必须由 CI 的 Ubuntu + Bun `1.4.4-canary.1+6bb5dc195` 生成。Windows 本机即使 revision 相同，patcher bundle 仍有字节漂移；用 Windows canary 对已绿的 `a94fe48` 重跑 `build.mjs --check` 也会 stale。修复方式：临时分支 + GitHub Actions 生成 artifact，提交 `cc221ce`（仅两个 dist 文件，install.sh 31/31 行、install.ps1 1 行）。
+- **状态**：run `39231095262` 三 job 全绿；Linux/macOS/Windows 均实装 2.1.303，version equality 通过，patch summary 0 failed，卸载清理通过；badge 更新 2.1.303。
+- **教训**：不要把“本机 `build.mjs --check` 通过”当成发布前充分条件；dist 的 canonical 生产环境是 CI Ubuntu + 固定 canary，后续所有 dist 重建走同一工具链。
